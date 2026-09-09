@@ -36,6 +36,22 @@ function addAssignment(){
   save(); alert("Assignment Posted for "+cl+" !"); render();
 }
 
+// NEW DELETE FUNCTION DA!
+function deleteAssignment(index){
+  if(confirm("Nijama delete pannanuma da?")){
+    assignments.splice(index,1);
+    save();
+    render();
+  }
+}
+function deleteAllAssignment(){
+  if(confirm("Ellam assignment ah delete pannanuma?")){
+    assignments=[];
+    save();
+    render();
+  }
+}
+
 function roleChange(v){ o_class.style.display = (v=='teacher')?'none':'block'; }
 
 function render(){
@@ -54,16 +70,31 @@ function render(){
   if(currentUser.role=='student'){
     studentPanel.style.display='block'; sClass.innerText=currentUser.class;
     let html=""; 
-    // FIX: 12th A student ku 12th assignment um theriyum
     let list=assignments.filter(a=> currentUser.class.includes(a.class) || a.class.includes(currentUser.class) || a.class=='All' );
-    if(list.length==0) html="Innum Assignment illa da! Owner kitta Class '"+currentUser.class+"' ku assignment add panna sollu!";
-    else list.forEach(a=>{ html+=`<div style='padding:10px;border-bottom:1px solid #eee'><b>${a.subject} [${a.class}]</b>: ${a.title}<br><small>By ${a.by} | ${a.date}</small></div>`; });
+    if(list.length==0) html="Innum Assignment illa da!";
+    else list.forEach((a, i)=>{
+      // Student ku delete varathu
+      html+=`<div style='padding:10px;border-bottom:1px solid #eee'><b>${a.subject} [${a.class}]</b>: ${a.title}<br><small>By ${a.by} | ${a.date}</small></div>`;
+    });
     myAssignments.innerHTML=html;
     return;
   }
+  // Owner/Teacher ku Assignment List + Delete Button
   let t="<tr><th>Name</th><th>Role</th><th>Class</th><th>EMIS</th><th>ID</th></tr>";
   users.forEach(u=>{ t+=`<tr><td>${u.name}</td><td><span class='badge ${u.role}'>${u.role}</span></td><td>${u.class}</td><td>${u.emis}</td><td>${u.username}</td></tr>`; });
   userTable.innerHTML=t;
+
+  // Assignment list with delete for owner/teacher
+  let assignHtml = `<h3>Posted Assignments <button onclick="deleteAllAssignment()" style="width:auto;padding:5px 10px;background:#ef4444;float:right">Delete All</button></h3>`;
+  if(assignments.length==0) assignHtml+="<p>Assignment illa da</p>";
+  else assignments.forEach((a,i)=>{
+    assignHtml+=`<div style='padding:10px;border:1px solid #eee;border-radius:8px;margin:6px 0'> <b>${a.class} - ${a.subject}</b>: ${a.title} <br><small>${a.by} | ${a.date}</small> <button onclick="deleteAssignment(${i})" style="width:auto;padding:4px 8px;background:#ef4444;float:right">Delete</button></div>`;
+  });
+  // assignment list ah user table ku keela kaatu
+  if(!document.getElementById('assignList')) {
+    let div=document.createElement('div'); div.id='assignList'; div.className='card'; listPanel.after(div);
+  }
+  document.getElementById('assignList').innerHTML=assignHtml;
 }
 
 currentUser = JSON.parse(localStorage.getItem('currentUser'));
