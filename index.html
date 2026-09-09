@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHSS Silattur ERP</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loginPage" class="card center">
+  <h2>GHSS Silattur - Login</h2>
+  <input id="uid" placeholder="Username / EMIS No">
+  <input id="upass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p id="err" style="color:red"></p>
+  <small>First Owner: <b>owner / owner123</b><br>Student: EMIS No + Password</small>
+</div>
+
+<div id="mainPage" style="display:none">
+  <div class="card">
+    <span>Hi <b id="myName"></b> <span id="myRole" class="badge"></span></span>
+    <button onclick="logout()" style="float:right; width:auto; padding:6px 12px; background:#ef4444">Logout</button>
+    <br><small id="myClass"></small>
+  </div>
+
+  <!-- OWNER PANEL -->
+  <div id="ownerPanel" class="card" style="display:none; border-left:5px solid #ef4444">
+    <h3>OWNER PANEL - Full Control</h3>
+    <p>Unakku pudicha maari ID create pannalam da!</p>
+    <input id="o_name" placeholder="Full Name">
+    <input id="o_id" placeholder="Username - Un Virupam">
+    <input id="o_pass" placeholder="Password - Un Virupam">
+    <select id="o_role" onchange="roleChange(this.value)">
+      <option value="">Role Select</option>
+      <option value="owner">Owner</option>
+      <option value="teacher">Teacher</option>
+      <option value="student">Student</option>
+    </select>
+    <input id="o_class" placeholder="Class (ex: 10th A)">
+    <input id="o_emis" placeholder="EMIS Number">
+    <button onclick="createUser('owner')">Create ID</button>
+  </div>
+
+  <!-- TEACHER PANEL -->
+  <div id="teacherPanel" class="card" style="display:none; border-left:5px solid #22c55e">
+    <h3>TEACHER PANEL - Student List Add</h3>
+    <input id="t_name" placeholder="Student Name">
+    <input id="t_id" placeholder="Student Username">
+    <input id="t_pass" placeholder="Password">
+    <input id="t_class" placeholder="Class">
+    <input id="t_emis" placeholder="EMIS No - Ithu vachu student login pannuvan">
+    <button onclick="createUser('teacher')">Add Student</button>
+  </div>
+
+  <!-- ASSIGNMENT ADD -->
+  <div id="assignPanel" class="card" style="display:none">
+    <h3>Assignment Add</h3>
+    <select id="a_class"><option value="">Class Select</option><option>6th</option><option>7th</option><option>8th</option><option>9th</option><option>10th</option><option>11th</option><option>12th</option></select>
+    <input id="a_sub" placeholder="Subject">
+    <input id="a_title" placeholder="Homework">
+    <button onclick="addAssignment()">Post Assignment</button>
+  </div>
+
+  <!-- STUDENT LIST -->
+  <div id="listPanel" class="card" style="display:none">
+    <h3>Students & Teachers List</h3>
+    <table id="userTable"><tr><th>Name</th><th>Role</th><th>Class</th><th>EMIS</th><th>ID</th></tr></table>
+  </div>
+
+  <!-- STUDENT VIEW -->
+  <div id="studentPanel" class="card" style="display:none; border-left:5px solid #3b82f6">
+    <h3>En Assignment - <span id="sClass"></span></h3>
+    <div id="myAssignments"></div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
