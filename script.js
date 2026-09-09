@@ -1,0 +1,70 @@
+// DATABASE - LocalStorage
+let users = JSON.parse(localStorage.getItem('school_users')) || [
+  {username:'owner', password:'owner123', role:'owner', name:'Main Owner', class:'All', emis:'0001'}
+];
+let assignments = JSON.parse(localStorage.getItem('school_assign')) || [];
+let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+function save(){ localStorage.setItem('school_users', JSON.stringify(users)); localStorage.setItem('school_assign', JSON.stringify(assignments)); }
+
+function login(){
+  let u=document.getElementById('uid').value.trim();
+  let p=document.getElementById('upass').value.trim();
+  let found = users.find(x => (x.username==u || x.emis==u) && x.password==p);
+  if(found){ localStorage.setItem('currentUser', JSON.stringify(found)); location.reload(); }
+  else document.getElementById('err').innerText="ID / EMIS / Password Thappu da!";
+}
+function logout(){ localStorage.removeItem('currentUser'); location.reload(); }
+
+function createUser(by){
+  let name, id, pass, role, cls, emis;
+  if(by=='owner'){ name=o_name.value; id=o_id.value; pass=o_pass.value; role=o_role.value; cls=o_class.value; emis=o_emis.value;
+    if(role=='') return alert("Role select pannu da!");
+  } else { // teacher
+    name=t_name.value; id=t_id.value; pass=t_pass.value; role='student'; cls=t_class.value; emis=t_emis.value;
+  }
+  if(!name || !id || !pass) return alert("Full details fill pannu da!");
+  if(by=='teacher' && role!='student') return alert("Teacher Student mattum thaan add pannalam!");
+  if(users.find(x=>x.username==id || (emis && x.emis==emis))) return alert("ID / EMIS already irukku da!");
+  users.push({username:id, password:pass, role:role, name:name, class:cls, emis:emis});
+  save(); alert("ID Create aayiduchu da! "+name); location.reload();
+}
+
+function addAssignment(){
+  let cl=a_class.value, sub=a_sub.value, title=a_title.value;
+  if(!cl || !sub || !title) return alert("Full fill pannu da!");
+  assignments.push({class:cl, subject:sub, title:title, by:currentUser.username, date:new Date().toLocaleDateString()});
+  save(); alert("Assignment Posted!"); render();
+}
+
+function roleChange(v){ o_class.style.display = (v=='teacher')?'none':'block'; }
+
+function render(){
+  if(!currentUser) return;
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('mainPage').style.display='block';
+  myName.innerText=currentUser.name; myRole.innerText=currentUser.role; myRole.className='badge '+currentUser.role;
+  myClass.innerText=currentUser.class+' | EMIS: '+currentUser.emis;
+
+  if(currentUser.role=='owner'){
+    ownerPanel.style.display='block'; assignPanel.style.display='block'; listPanel.style.display='block';
+  }
+  if(currentUser.role=='teacher'){
+    teacherPanel.style.display='block'; assignPanel.style.display='block'; listPanel.style.display='block';
+  }
+  if(currentUser.role=='student'){
+    studentPanel.style.display='block'; sClass.innerText=currentUser.class;
+    let html=""; let list=assignments.filter(a=>a.class==currentUser.class);
+    if(list.length==0) html="Innum Assignment illa da!";
+    else list.forEach(a=>{ html+=`<div style='padding:10px;border-bottom:1px solid #eee'><b>${a.subject}</b>: ${a.title}<br><small>By ${a.by} | ${a.date}</small></div>`; });
+    myAssignments.innerHTML=html;
+    return;
+  }
+  // Table
+  let t="<tr><th>Name</th><th>Role</th><th>Class</th><th>EMIS</th><th>ID</th></tr>";
+  users.forEach(u=>{ t+=`<tr><td>${u.name}</td><td><span class='badge ${u.role}'>${u.role}</span></td><td>${u.class}</td><td>${u.emis}</td><td>${u.username}</td></tr>`; });
+  userTable.innerHTML=t;
+}
+
+currentUser = JSON.parse(localStorage.getItem('currentUser'));
+if(currentUser) render();
