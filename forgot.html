@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Forgot Password - GHSS Silattur</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="card">
+  <h2>Reset Password</h2>
+  <input type="text" id="f_user" placeholder="Username / EMIS Number">
+  <div class="password-wrapper">
+    <input type="password" id="f_newpass" placeholder="New Password">
+    <span class="eye-icon" onclick="togglePassword()">👁️</span>
+  </div>
+  <button onclick="resetPassword()">Reset Password</button>
+  <div class="link-center"><a href="index.html">Back to Login</a></div>
+</div>
+<script src="js/db.js"></script>
+<script>
+function togglePassword(){
+  const input = document.getElementById("f_newpass");
+  input.type = input.type === "password"? "text" : "password";
+}
+function resetPassword(){
+  const username = document.getElementById("f_user").value.trim();
+  const newPass = document.getElementById("f_newpass").value.trim();
+  let users = getUsers();
+  const index = users.findIndex(u => u.username === username || u.emis === username);
+  if(index > -1 && newPass.length >= 4){
+    users[index].password = newPass;
+    saveUsers(users);
+    alert("Password Reset Successful");
+    window.location.href = "index.html";
+  } else {
+    alert("User not found or password too short (min 4 chars)");
+  }
+}
+</script>
+</body>
+</html>
