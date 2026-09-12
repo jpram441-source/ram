@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHSS Silattur - School Management</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOGIN SECTION -->
+<div id="loginPage" class="card">
+  <h2>GHSS Silattur - Login</h2>
+  <select id="role">
+    <option value="owner">Owner</option>
+    <option value="teacher">Teacher</option>
+    <option value="student">Student</option>
+  </select>
+  <input type="text" id="username" placeholder="Username / EMIS Number">
+  <div class="password-wrapper">
+    <input type="password" id="password" placeholder="Password">
+    <span class="eye-icon" onclick="togglePassword('password')">👁️</span>
+  </div>
+  <button onclick="login()">Login</button>
+  <div class="link-center"><a href="forgot.html">Forgot Password?</a></div>
+  <p id="error" class="error-msg"></p>
+</div>
+
+<!-- DASHBOARD SECTION -->
+<div id="dashboardPage" class="dashboard-card" style="display:none;">
+  <div class="header">
+    <h2 id="welcomeText"></h2>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+
+  <!-- Create User Section - Only for Owner and Teacher -->
+  <div id="createSection">
+    <div class="grid">
+      <div class="card small">
+        <h3 id="createTitle">Create User</h3>
+        <input type="text" id="new_name" placeholder="Full Name">
+        <input type="text" id="new_username" placeholder="Username (Owner/Teacher)">
+        <input type="text" id="new_emis" placeholder="EMIS Number (Student)">
+        <div class="password-wrapper">
+          <input type="password" id="new_pass" placeholder="Password">
+          <span class="eye-icon" onclick="togglePassword('new_pass')">👁️</span>
+        </div>
+        <select id="new_role"></select>
+        <button onclick="createUser()">Create User</button>
+      </div>
+      <div class="card small">
+        <h3>Add Assignment</h3>
+        <input type="text" id="ass_title" placeholder="Assignment Title">
+        <textarea id="ass_desc" placeholder="Assignment Description"></textarea>
+        <button onclick="addAssignment()">Add Assignment</button>
+        <hr>
+        <h3>Add Quiz</h3>
+        <input type="text" id="quiz_sub" placeholder="Subject (Tamil, English, Maths)">
+        <input type="text" id="quiz_q" placeholder="Question">
+        <input type="text" id="quiz_opt" placeholder="Options comma separated (A,B,C,D)">
+        <input type="text" id="quiz_ans" placeholder="Correct Answer">
+        <button onclick="addQuiz()">Add Quiz</button>
+      </div>
+    </div>
+    <h3>Users List (Owner and Teacher can add)</h3>
+    <div id="userList"></div>
+  </div>
+
+  <!-- Assignment List - For All -->
+  <div class="card small" style="width:100%; margin-top:20px;">
+    <h3>Assignments</h3>
+    <div id="assList"></div>
+  </div>
+
+  <!-- Student Quiz Section - Only for Student -->
+  <div id="studentSection" class="card small" style="width:100%; margin-top:20px;">
+    <h3>Weekly Quiz Test - Subject Wise (One Time Per Week)</h3>
+    <select id="subjectFilter" onchange="loadQuiz()">
+      <option value="">Select Subject</option>
+      <option value="Tamil">Tamil</option>
+      <option value="English">English</option>
+      <option value="Maths">Maths</option>
+      <option value="Science">Science</option>
+      <option value="Social">Social</option>
+    </select>
+    <div id="quizArea"></div>
+    <div id="quizResult"></div>
+    <h4>My Quiz History</h4>
+    <div id="quizHistory"></div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script>
+let currentUser = null;
+
+function togglePassword(id){
+  const input = document.getElementById(id);
+  input.type = input.type === "password"? "text" : "password";
+}
+
+function login(){
+  const role = document.getElementById("role").value;
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const users = getUsers();
+  let found = null;
+
+  if(role === "student"){
+    found = users.find(u => u.emis === username && u.password === password && u.role === "student");
+  } else {
+    found = users.find(u => u.username === username && u.password === password && u.role === role);
+  }
+
+  if(!found){
+    document.getElementById("error").innerText = "Invalid Username/EMIS or Password";
+    return;
+  }
+
+  localStorage.setItem("currentUser", JSON.stringify(found));
+  showDashboard();
+}
+
+function showDashboard(){
+  currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if(!currentUser) return;
+
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("dashboardPage").style.display = "block";
+  document.getElementById("welcomeText").innerText = `Welcome ${currentUser.name} (${currentUser.role})`;
+
+  const roleSelect = document.getElementById("new_role");
+
+  if(currentUser.role === "owner"){
+    roleSelect.innerHTML = `<option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option>`;
+    document.getElementById("createTitle").innerText = "Create Owner / Teacher / Student (Owner Only)";
+    document.getElementById("studentSection").style.display = "none";
+  } else if(currentUser.role === "teacher"){
+    roleSelect.innerHTML = `<option value="student">Student</option>`;
+    document.getElementById("createTitle").innerText = "Create Student (Teacher)";
+    document.getElementById("studentSection").style.display = "none";
+  } else {
+    document.getElementById("createSection").style.display = "none";
+    document.getElementById("studentSection").style.display = "block";
+  }
+
+  loadUsers();
+  loadAssignments();
+  loadHistory();
+}
+
+function createUser(){
+  const name = document.getElementById("new_name").value.trim();
+  const username = document.getElementById("new_username").value.trim();
+  const emis = document.getElementById("new_emis").value.trim();
+  const pass = document.getElementById("new_pass").value.trim();
+  const role = document.getElementById("new_role").value;
+
+  if(currentUser.role === "teacher" && role!== "student"){
+    alert("Teacher can create only Student");
+    return;
+  }
+  if(!name ||!pass){ alert("Name and Password required"); return; }
+  if(role!== "student" &&!username){ alert("Username required for Owner/Teacher"); return; }
+  if(role === "student" &&!emis){ alert("EMIS Number required for Student"); return; }
+
+  let users = getUsers();
+  users.push({ id: Date.now(), name, username: username || emis, emis, password: pass, role });
+  saveUsers(users);
+  alert(`${role} created successfully`);
+  loadUsers();
+}
+
+function loadUsers(){
+  let users = getUsers();
+  if(currentUser.role === "teacher") users = users.filter(u => u.role === "student");
+  document.getElementById("userList").innerHTML = users.map(u => `
+    <div class="list-item"><span><b>${u.name}</b> - ${u.role} - ${u.emis? 'EMIS: '+u.emis : 'Username: '+u.username}</span><span class="badge ${u.role}">${u.role}</span></div>
+  `).join('');
+}
+
+function addAssignment(){
+  const title = document.getElementById("ass_title").value.trim();
+  const desc = document.getElementById("ass_desc").value.trim();
+  if(!title) return;
+  const list = getAssignments();
+  list.push({ id: Date.now(), title, desc, by: currentUser.name, date: new Date().toLocaleDateString() });
+  saveAssignments(list);
+  loadAssignments();
+  alert("Assignment Added");
+}
+
+function loadAssignments(){
+  const list = getAssignments();
+  document.getElementById("assList").innerHTML = list.length === 0? "<p>No assignments</p>" : list.map(a => `
+    <div class="list-item"><div><b>${a.title}</b><br><small>${a.desc}</small><br><small>By ${a.by} on ${a.date}</small></div></div>
+  `).join('');
+}
+
+function addQuiz(){
+  const subject = document.getElementById("quiz_sub").value.trim();
+  const question = document.getElementById("quiz_q").value.trim();
+  const options = document.getElementById("quiz_opt").value.split(',');
+  const answer = document.getElementById("quiz_ans").value.trim();
+  if(!subject ||!question) return;
+  const list = getQuizzes();
+  list.push({ id: Date.now(), subject, question, options, answer });
+  saveQuizzes(list);
+  alert("Quiz Added");
+}
+
+function getWeekId(){
+  const now = new Date();
+  const week = Math.ceil(now.getDate()/7);
+  return `${now.getFullYear()}-${now.getMonth()}-${week}`;
+}
+
+function loadQuiz(){
+  const subject = document.getElementById("subjectFilter").value;
+  if(!subject) return;
+  const weekId = getWeekId();
+  const attempts = getAttempts();
+  const already = attempts.find(a => a.emis === currentUser.emis && a.subject === subject && a.week === weekId);
+  if(already){
+    document.getElementById("quizArea").innerHTML = `<p class="success">Already attended ${subject} quiz this week. Score: ${already.score}/${already.total}</p>`;
+    return;
+  }
+  const quizzes = getQuizzes().filter(q => q.subject.toLowerCase() === subject.toLowerCase());
+  if(quizzes.length === 0){
+    document.getElementById("quizArea").innerHTML = "<p>No quiz available for this subject</p>";
+    return;
+  }
+  let html = `<form id="quizForm">`;
+  quizzes.forEach((q,i)=>{
+    html += `<p><b>Q${i+1}: ${q.question}</b></p>`;
+    q.options.forEach(opt=>{
+      html += `<label><input type="radio" name="q${q.id}" value="${opt.trim()}"> ${opt.trim()}</label><br>`;
+    });
+  });
+  html += `<button type="button" onclick="submitQuiz()">Submit Quiz</button></form>`;
+  document.getElementById("quizArea").innerHTML = html;
+}
+
+function submitQuiz(){
+  const subject = document.getElementById("subjectFilter").value;
+  const quizzes = getQuizzes().filter(q => q.subject.toLowerCase() === subject.toLowerCase());
+  let score = 0;
+  quizzes.forEach(q=>{
+    const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+    if(selected && selected.value.trim().toLowerCase() === q.answer.trim().toLowerCase()) score++;
+  });
+  const attempts = getAttempts();
+  attempts.push({ emis: currentUser.emis, subject, week: getWeekId(), score, total: quizzes.length, date: new Date().toISOString() });
+  saveAttempts(attempts);
+  document.getElementById("quizResult").innerHTML = `<h3>Your Score: ${score}/${quizzes.length}</h3>`;
+  document.getElementById("quizArea").innerHTML = "";
+  loadHistory();
+}
+
+function loadHistory(){
+  if(!currentUser || currentUser.role!== "student") return;
+  const attempts = getAttempts().filter(a => a.emis === currentUser.emis);
+  document.getElementById("quizHistory").innerHTML = attempts.map(a => `<p>${a.subject} - Week ${a.week} - Score ${a.score}/${a.total}</p>`).join('');
+}
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+// Auto login if already logged in
+if(localStorage.getItem("currentUser")){
+  showDashboard();
+}
+</script>
+</body>
+</html>
