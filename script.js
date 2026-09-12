@@ -2,34 +2,67 @@ let users = JSON.parse(localStorage.getItem('school_users')) || [{username:'owne
 let assignments = JSON.parse(localStorage.getItem('school_assign')) || [];
 let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 function save(){ localStorage.setItem('school_users', JSON.stringify(users)); localStorage.setItem('school_assign', JSON.stringify(assignments)); }
-function login(){ let u=uid.value.trim(), p=upass.value.trim(); let f=users.find(x=>(x.username==u||x.emis==u)&&x.password==p); if(f){ localStorage.setItem('currentUser', JSON.stringify(f)); location.reload(); } else err.innerText="ID / EMIS / Password Thappu da!"; }
+
+function login(){
+  let u=uid.value.trim(), p=upass.value.trim();
+  let f=users.find(x=>(x.username==u||x.emis==u)&&x.password==p);
+  if(f){
+    localStorage.setItem('currentUser', JSON.stringify(f));
+    location.reload();
+  } else {
+    err.innerText="ID / EMIS / Password Error!";
+    document.getElementById('forgotLink').style.display='block';
+  }
+}
 function logout(){ localStorage.removeItem('currentUser'); location.reload(); }
+
+// --- FORGOT PASSWORD FUNCTIONS ---
+function showForgot(){
+  loginPage.style.display='none';
+  document.getElementById('forgotPage').style.display='block';
+  document.getElementById('f_uid').value = document.getElementById('uid').value;
+}
+function backToLogin(){
+  document.getElementById('forgotPage').style.display='none';
+  loginPage.style.display='block';
+}
+function resetPassword(){
+  let u = f_uid.value.trim();
+  let np = f_newpass.value.trim();
+  if(!u ||!np) return f_err.innerText = "Full details fill !";
+  let idx = users.findIndex(x=> x.username==u || x.emis==u);
+  if(idx==-1) return f_err.innerText = "NO THIS ID!";
+  users[idx].password = np;
+  save();
+  alert("Your Password Changed Successfu! Now login with the new password: " + users[idx].name);
+  backToLogin();
+}
+// --- END ---
 
 function createUser(by){
   let name, id, pass, role, cls, emis, idx;
   if(by=='owner'){
     idx=document.getElementById('editIndex').value;
     name=o_name.value.trim(); id=o_id.value.trim(); pass=o_pass.value.trim(); role=o_role.value; cls=o_class.value.trim(); emis=o_emis.value.trim();
-    if(role=='') return alert("Role select pannu da!");
+    if(role=='') return alert("Select the role!");
   } else {
     idx=document.getElementById('t_editIndex').value;
     name=t_name.value.trim(); id=t_id.value.trim(); pass=t_pass.value.trim(); role='student'; cls=t_class.value.trim(); emis=t_emis.value.trim();
   }
-  if(!name||!id||!pass) return alert("Full details fill pannu da!");
-  // Edit mode
+  if(!name||!id||!pass) return alert("Fill in all the details!");
   if(idx!==""){
     users[idx].name=name; users[idx].username=id; users[idx].password=pass; users[idx].role=role; users[idx].class=cls; users[idx].emis=emis;
-    save(); alert("Update aayiduchu da! "+name); cancelEdit(); location.reload(); return;
+    save(); alert("It has been updated! "+name); cancelEdit(); location.reload(); return;
   }
-  if(users.find(x=>x.username==id)) return alert("ID already irukku da!");
-  if(emis && users.find(x=>x.emis==emis)) return alert("EMIS already irukku da!");
-  users.push({username:id, password:pass, role:role, name:name, class:cls, emis:emis}); save(); alert("ID Create aayiduchu da! "+name); location.reload();
+  if(users.find(x=>x.username==id)) return alert("ID already exists!");
+  if(emis && users.find(x=>x.emis==emis)) return alert("EMIS already exists!");
+  users.push({username:id, password:pass, role:role, name:name, class:cls, emis:emis}); save(); alert("ID has been created! "+name); location.reload();
 }
 
 function editUser(i){
   let u=users[i];
-  if(currentUser.role=='teacher' && u.role!='student') return alert("Teacher Student ah mattum edit pannalam!");
-  if(u.username=='owner' && currentUser.username!='owner') return alert("Main Owner ah edit panna mudiyathu!");
+  if(currentUser.role=='teacher' && u.role!='student') return alert("Teacher can only edit students!");
+  if(u.username=='owner' && currentUser.username!='owner') return alert("Cannot edit the Main Owner!");
   if(currentUser.role=='owner'){
     editIndex.value=i; o_name.value=u.name; o_id.value=u.username; o_pass.value=u.password; o_role.value=u.role; o_class.value=u.class; o_emis.value=u.emis;
     editTitle.innerText="Edit ID - "+u.name; createBtn.innerText="Update ID"; createBtn.style.background="#f59e0b"; cancelBtn.style.display="block"; window.scrollTo(0,0);
@@ -45,14 +78,14 @@ function cancelEdit(){
 }
 function deleteUser(i){
   let u=users[i];
-  if(u.username=='owner') return alert("Main owner ah delete panna mudiyathu da!");
-  if(currentUser.role=='teacher' && u.role!='student') return alert("Teacher Student ah mattum delete pannalam!");
-  if(confirm(u.name+" ah delete pannanuma da?")){ users.splice(i,1); save(); render(); }
+  if(u.username=='owner') return alert("Cannot delete the Main Owner!");
+  if(currentUser.role=='teacher' && u.role!='student') return alert("Teacher can only delete students!");
+  if(confirm(u.name+" Do you want to delete?")){ users.splice(i,1); save(); render(); }
 }
 
-function addAssignment(){ let cl=a_class.value, sub=a_sub.value, title=a_title.value; if(!cl||!sub||!title) return alert("Full fill pannu da!"); assignments.push({class:cl, subject:sub, title:title, by:currentUser.username, date:new Date().toLocaleDateString()}); save(); render(); }
-function deleteAssignment(i){ if(confirm("Delete pannanuma?")){ assignments.splice(i,1); save(); render(); } }
-function deleteAllAssignment(){ if(confirm("Ellam delete pannanuma?")){ assignments=[]; save(); render(); } }
+function addAssignment(){ let cl=a_class.value, sub=a_sub.value, title=a_title.value; if(!cl||!sub||!title) return alert("Fill it completely!"); assignments.push({class:cl, subject:sub, title:title, by:currentUser.username, date:new Date().toLocaleDateString()}); save(); render(); }
+function deleteAssignment(i){ if(confirm("Do you want to delete?")){ assignments.splice(i,1); save(); render(); } }
+function deleteAllAssignment(){ if(confirm("Do you want to delete everything?")){ assignments=[]; save(); render(); } }
 
 function render(){
   if(!currentUser) return;
@@ -63,7 +96,7 @@ function render(){
   if(currentUser.role=='student'){
     studentPanel.style.display='block'; sClass.innerText=currentUser.class;
     let list=assignments.filter(a=> currentUser.class.includes(a.class) || a.class.includes(currentUser.class) || a.class=='All');
-    myAssignments.innerHTML= list.length==0? "Innum Assignment illa da!" : list.map(a=>`<div style='padding:10px;border-bottom:1px solid #eee'><b>${a.subject} [${a.class}]</b>: ${a.title}<br><small>${a.by} | ${a.date}</small></div>`).join('');
+    myAssignments.innerHTML= list.length==0? "There are no assignments yet!" : list.map(a=>`<div style='padding:10px;border-bottom:1px solid #eee'><b>${a.subject} [${a.class}]</b>: ${a.title}<br><small>${a.by} | ${a.date}</small></div>`).join('');
     return;
   }
   let t="<tr><th>Name</th><th>Role</th><th>Class</th><th>ID</th><th>Action</th></tr>";
@@ -73,7 +106,7 @@ function render(){
   });
   userTable.innerHTML=t;
   let h=`<h3>Assignments <button onclick="deleteAllAssignment()" style="width:auto;padding:5px 10px;background:#ef4444;float:right">Delete All</button></h3>`;
-  h+= assignments.length==0? "<p>Assignment illa</p>" : assignments.map((a,i)=>`<div style='padding:8px;border:1px solid #eee;border-radius:8px;margin:5px 0'><b>${a.class} - ${a.subject}</b>: ${a.title}<br><small>${a.by}|${a.date}</small><button onclick="deleteAssignment(${i})" style="width:auto;padding:3px 8px;background:#ef4444;float:right">Del</button></div>`).join('');
+  h+= assignments.length==0? "<p>No assignment</p>" : assignments.map((a,i)=>`<div style='padding:8px;border:1px solid #eee;border-radius:8px;margin:5px 0'><b>${a.class} - ${a.subject}</b>: ${a.title}<br><small>${a.by}|${a.date}</small><button onclick="deleteAssignment(${i})" style="width:auto;padding:3px 8px;background:#ef4444;float:right">Del</button></div>`).join('');
   assignList.innerHTML=h;
 }
 currentUser = JSON.parse(localStorage.getItem('currentUser')); if(currentUser) render();
