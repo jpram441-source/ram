@@ -1,7 +1,7 @@
 # 🏫 GHSS Silattur - School ERP System
 
 Modern School Management System built with **HTML, CSS, JavaScript + LocalStorage Database**
-Direct ah GitHub Pages la run aagum!
+It will run directly on GitHub Pages!
 
 ### 🌐 LIVE WEBSITE
 👉 https://ram005-source.github.io/ram/
@@ -10,27 +10,27 @@ Direct ah GitHub Pages la run aagum!
 
 | Role | Username / EMIS | Password | Power |
 |------|---|---|---|
-| **Owner** | owner | owner123 | Full Control - Owner/Teacher/Student create pannalam |
-| **Teacher** | Teacher creates | Teacher creates | Student mattum add pannalam |
-| **Student** | EMIS No | Password | Assignment mattum paapaan |
+| **Owner** | owner | owner123 | Full Control - Owner/Teacher/Student let's create |
+| **Teacher** | Teacher creates | Teacher creates | Student let's add only that |
+| **Student** | EMIS No | Password | He will only look at the assignment |
 
 ### ✨ Features
 
 **OWNER - Full Control:**
-- Unakku pudicha maari Owner ID / Password create pannalam
-- Teacher ID create panrathu Owner mattum thaan mudiyum
-- Student ID, Class, EMIS No add pannalam
-- Assignment create pannalam
-- Full Students & Teachers List paakalam
+- We can create the Owner ID / Password as you like
+- Only the Owner can create Teacher IDs
+- We can add Student ID, Class, EMIS No
+- Let's create the assignment
+- We can view the full Students & Teachers List
 
-**TEACHER - Limited:**
-- Student ID mattum create pannalam (Teacher ID create panna mudiyathu)
-- EMIS No vachu student add pannanum
-- Assignment add pannalam
+**TEACHER - Limited:*
+- We can create only Student ID (Cannot create Teacher ID)
+- Need to add student using EMIS No
+- Can add assignment
 
 **STUDENT:**
-- EMIS No potu login pannanum
-- Thanga class ku assign panna assignment mattum paapaan
+- Need to login using EMIS No
+- Will only see assignments assigned to their class
 
 ### 🛠️ Technology Used
 - **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
@@ -44,10 +44,10 @@ Direct ah GitHub Pages la run aagum!
 
 ### 🚀 How to Use
 1. Owner login: owner / owner123
-2. Owner ah Teacher ID create pannu
-3. Teacher / Owner ah Student add pannu (EMIS must)
-4. Assignment add pannu class wise
-5. Student EMIS No vachu login panni assignment paapaan
+2. Owner will create the Teacher ID
+3. Teacher / Owner will add the Student (EMIS must)
+4. Add assignment class-wise
+5. Student will login using EMIS No and view the assignment
 
 ---
 Made for RAM with ❤️ | Owner RAM Control
