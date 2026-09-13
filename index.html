@@ -8,7 +8,6 @@
 </head>
 <body>
 
-<!-- LOGIN SECTION -->
 <div id="loginPage" class="card">
   <h2>GHSS Silattur - Login</h2>
   <select id="role">
@@ -26,63 +25,83 @@
   <p id="error" class="error-msg"></p>
 </div>
 
-<!-- DASHBOARD SECTION -->
 <div id="dashboardPage" class="dashboard-card" style="display:none;">
   <div class="header">
     <h2 id="welcomeText"></h2>
     <button onclick="logout()" class="logout-btn">Logout</button>
   </div>
 
-  <!-- Create User Section - Only for Owner and Teacher -->
   <div id="createSection">
     <div class="grid">
       <div class="card small">
         <h3 id="createTitle">Create User</h3>
+        <input type="hidden" id="edit_user_id">
         <input type="text" id="new_name" placeholder="Full Name">
         <input type="text" id="new_username" placeholder="Username (Owner/Teacher)">
         <input type="text" id="new_emis" placeholder="EMIS Number (Student)">
+        <select id="new_class"></select>
         <div class="password-wrapper">
           <input type="password" id="new_pass" placeholder="Password">
           <span class="eye-icon" onclick="togglePassword('new_pass')">👁️</span>
         </div>
         <select id="new_role"></select>
-        <button onclick="createUser()">Create User</button>
+        <button onclick="createUser()" id="createUserBtn">Create User</button>
+        <button onclick="cancelEditUser()" id="cancelUserBtn" style="display:none;background:#6b7280">Cancel Edit</button>
       </div>
       <div class="card small">
-        <h3>Add Assignment</h3>
+        <h3>Assignment <span id="assEditLabel"></span></h3>
+        <input type="hidden" id="edit_ass_id">
         <input type="text" id="ass_title" placeholder="Assignment Title">
         <textarea id="ass_desc" placeholder="Assignment Description"></textarea>
-        <button onclick="addAssignment()">Add Assignment</button>
+        <select id="ass_class"></select>
+        <select id="ass_subject"></select>
+        <button onclick="addAssignment()" id="assBtn">Add Assignment</button>
+        <button onclick="cancelEditAss()" id="cancelAssBtn" style="display:none;background:#6b7280">Cancel</button>
         <hr>
-        <h3>Add Quiz</h3>
-        <input type="text" id="quiz_sub" placeholder="Subject (Tamil, English, Maths)">
-        <input type="text" id="quiz_q" placeholder="Question">
+        <h3>Quiz - Manual / Auto</h3>
+        <input type="hidden" id="edit_quiz_id">
+        <select id="quiz_class"></select>
+        <select id="quiz_sub"></select>
+        <input type="text" id="quiz_topic" placeholder="Topic for Auto Quiz (Ex: Photosynthesis)">
+        <input type="number" id="quiz_count" value="5" min="1" max="10" placeholder="No. of Questions">
+        <button onclick="autoGenerateQuiz()" style="background:#059669">🤖 Auto Generate Quiz from Topic</button>
+        <hr>
+        <input type="text" id="quiz_q" placeholder="Question (Manual)">
         <input type="text" id="quiz_opt" placeholder="Options comma separated (A,B,C,D)">
         <input type="text" id="quiz_ans" placeholder="Correct Answer">
-        <button onclick="addQuiz()">Add Quiz</button>
+        <button onclick="addQuiz()" id="quizBtn">Add Quiz Manually</button>
+        <button onclick="cancelEditQuiz()" id="cancelQuizBtn" style="display:none;background:#6b7280">Cancel Edit</button>
       </div>
     </div>
-    <h3>Users List (Owner and Teacher can add)</h3>
+    <h3>Users List - Edit/Delete Available</h3>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <select id="filterUserClass" onchange="loadUsers()"><option value="">Filter by Class - All</option></select>
+      <select id="filterUserRole" onchange="loadUsers()"><option value="">All Roles</option><option value="teacher">Teacher</option><option value="student">Student</option><option value="owner">Owner</option></select>
+    </div>
     <div id="userList"></div>
   </div>
 
-  <!-- Assignment List - For All -->
   <div class="card small" style="width:100%; margin-top:20px;">
-    <h3>Assignments</h3>
+    <h3>Assignments - Edit/Delete</h3>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <select id="filterAssClass" onchange="loadAssignments()"><option value="">All Classes</option></select>
+      <select id="filterAssSubject" onchange="loadAssignments()"><option value="">All Subjects</option></select>
+    </div>
     <div id="assList"></div>
   </div>
 
-  <!-- Student Quiz Section - Only for Student -->
+  <div class="card small" style="width:100%; margin-top:20px;">
+    <h3>Quiz Bank - Edit/Delete</h3>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <select id="filterQuizClass" onchange="loadQuizBank()"><option value="">All Classes</option></select>
+      <select id="filterQuizSubject" onchange="loadQuizBank()"><option value="">All Subjects</option></select>
+    </div>
+    <div id="quizBankList"></div>
+  </div>
+
   <div id="studentSection" class="card small" style="width:100%; margin-top:20px;">
     <h3>Weekly Quiz Test - Subject Wise (One Time Per Week)</h3>
-    <select id="subjectFilter" onchange="loadQuiz()">
-      <option value="">Select Subject</option>
-      <option value="Tamil">Tamil</option>
-      <option value="English">English</option>
-      <option value="Maths">Maths</option>
-      <option value="Science">Science</option>
-      <option value="Social">Social</option>
-    </select>
+    <select id="subjectFilter" onchange="loadQuiz()"></select>
     <div id="quizArea"></div>
     <div id="quizResult"></div>
     <h4>My Quiz History</h4>
@@ -92,11 +111,49 @@
 
 <script src="js/db.js"></script>
 <script>
+const ALL_CLASSES = ["6th","7th","8th","9th","10th","11th A","11th B","11th B1","11th C","12th A","12th B","12th B1","12th C"];
+const SUBJECTS_6_10 = ["Tamil","English","Maths","Science","Social Science"];
+const SUBJECTS_11_12 = ["Tamil","English","Maths","Physics","Chemistry","Computer Science","Biology (Botany)","Biology (Zoology)"];
+
+function getSubjectsByClass(cls){
+  if(!cls) return [...new Set([...SUBJECTS_6_10,...SUBJECTS_11_12])];
+  if(["6th","7th","8th","9th","10th"].includes(cls)) return SUBJECTS_6_10;
+  return SUBJECTS_11_12;
+}
+
 let currentUser = null;
 
 function togglePassword(id){
   const input = document.getElementById(id);
   input.type = input.type === "password"? "text" : "password";
+}
+
+function fillClassDropdowns(){
+  const ids = ["new_class","ass_class","quiz_class","filterUserClass","filterAssClass","filterQuizClass"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const isFilter = id.startsWith("filter");
+    el.innerHTML = (isFilter? `<option value="">${id.includes("Ass")||id.includes("Quiz")?"All Classes":"All Classes / Filter"}</option>` : `<option value="">Select Class</option>`) + ALL_CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+  fillSubjectDropdowns();
+}
+
+function fillSubjectDropdowns(){
+  const classVal = document.getElementById("quiz_class")?.value || document.getElementById("ass_class")?.value || document.getElementById("new_class")?.value;
+  // For assignment and quiz add forms - dynamic based on selected class
+  const assClass = document.getElementById("ass_class").value;
+  const quizClass = document.getElementById("quiz_class").value;
+
+  document.getElementById("ass_subject").innerHTML = `<option value="">Select Subject</option>` + getSubjectsByClass(assClass).map(s=>`<option value="${s}">${s}</option>`).join('');
+  document.getElementById("quiz_sub").innerHTML = `<option value="">Select Subject</option>` + getSubjectsByClass(quizClass).map(s=>`<option value="${s}">${s}</option>`).join('');
+
+  // filter dropdowns show all subjects
+  const allSub = [...new Set([...SUBJECTS_6_10,...SUBJECTS_11_12])];
+  const filterAssSub = document.getElementById("filterAssSubject");
+  if(filterAssSub) filterAssSub.innerHTML = `<option value="">All Subjects</option>` + allSub.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const filterQuizSub = document.getElementById("filterQuizSubject");
+  if(filterQuizSub) filterQuizSub.innerHTML = `<option value="">All Subjects</option>` + allSub.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
 function login(){
@@ -105,18 +162,15 @@ function login(){
   const password = document.getElementById("password").value.trim();
   const users = getUsers();
   let found = null;
-
   if(role === "student"){
     found = users.find(u => u.emis === username && u.password === password && u.role === "student");
   } else {
     found = users.find(u => u.username === username && u.password === password && u.role === role);
   }
-
   if(!found){
     document.getElementById("error").innerText = "Invalid Username/EMIS or Password";
     return;
   }
-
   localStorage.setItem("currentUser", JSON.stringify(found));
   showDashboard();
 }
@@ -124,16 +178,14 @@ function login(){
 function showDashboard(){
   currentUser = JSON.parse(localStorage.getItem("currentUser"));
   if(!currentUser) return;
-
   document.getElementById("loginPage").style.display = "none";
   document.getElementById("dashboardPage").style.display = "block";
-  document.getElementById("welcomeText").innerText = `Welcome ${currentUser.name} (${currentUser.role})`;
-
+  document.getElementById("welcomeText").innerText = `Welcome ${currentUser.name} (${currentUser.role}) ${currentUser.className? '- '+currentUser.className:''}`;
+  fillClassDropdowns();
   const roleSelect = document.getElementById("new_role");
-
   if(currentUser.role === "owner"){
     roleSelect.innerHTML = `<option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option>`;
-    document.getElementById("createTitle").innerText = "Create Owner / Teacher / Student (Owner Only)";
+    document.getElementById("createTitle").innerText = "Create Owner / Teacher / Student";
     document.getElementById("studentSection").style.display = "none";
   } else if(currentUser.role === "teacher"){
     roleSelect.innerHTML = `<option value="student">Student</option>`;
@@ -142,136 +194,183 @@ function showDashboard(){
   } else {
     document.getElementById("createSection").style.display = "none";
     document.getElementById("studentSection").style.display = "block";
+    // student subject filter based on his class
+    const subs = getSubjectsByClass(currentUser.className);
+    document.getElementById("subjectFilter").innerHTML = `<option value="">Select Subject</option>` + subs.map(s=>`<option value="${s}">${s}</option>`).join('');
   }
-
-  loadUsers();
-  loadAssignments();
-  loadHistory();
+  document.getElementById("ass_class").addEventListener("change", fillSubjectDropdowns);
+  document.getElementById("quiz_class").addEventListener("change", fillSubjectDropdowns);
+  loadUsers(); loadAssignments(); loadQuizBank(); loadHistory();
 }
 
+// USER CRUD
 function createUser(){
+  const editId = document.getElementById("edit_user_id").value;
   const name = document.getElementById("new_name").value.trim();
   const username = document.getElementById("new_username").value.trim();
   const emis = document.getElementById("new_emis").value.trim();
+  const className = document.getElementById("new_class").value;
   const pass = document.getElementById("new_pass").value.trim();
   const role = document.getElementById("new_role").value;
-
-  if(currentUser.role === "teacher" && role!== "student"){
-    alert("Teacher can create only Student");
-    return;
-  }
+  if(currentUser.role === "teacher" && role!== "student"){ alert("Teacher can create only Student"); return; }
   if(!name ||!pass){ alert("Name and Password required"); return; }
-  if(role!== "student" &&!username){ alert("Username required for Owner/Teacher"); return; }
-  if(role === "student" &&!emis){ alert("EMIS Number required for Student"); return; }
+  if(role!== "student" &&!username){ alert("Username required"); return; }
+  if(role === "student" &&!emis){ alert("EMIS required"); return; }
+  if(role === "student" &&!className){ alert("Class required for Student"); return; }
 
   let users = getUsers();
-  users.push({ id: Date.now(), name, username: username || emis, emis, password: pass, role });
-  saveUsers(users);
-  alert(`${role} created successfully`);
-  loadUsers();
+  if(editId){
+    const idx = users.findIndex(u=>u.id==editId);
+    if(idx>-1){ users[idx] = {...users[idx], name, username: username || emis, emis, className, password: pass, role}; }
+    saveUsers(users); alert("User Updated");
+  } else {
+    users.push({ id: Date.now(), name, username: username || emis, emis, className, password: pass, role });
+    saveUsers(users); alert(`${role} created`);
+  }
+  clearUserForm(); loadUsers();
 }
-
+function editUser(id){
+  const u = getUsers().find(x=>x.id==id);
+  if(!u) return;
+  document.getElementById("edit_user_id").value = u.id;
+  document.getElementById("new_name").value = u.name;
+  document.getElementById("new_username").value = u.username;
+  document.getElementById("new_emis").value = u.emis;
+  document.getElementById("new_class").value = u.className||"";
+  document.getElementById("new_pass").value = u.password;
+  document.getElementById("new_role").value = u.role;
+  document.getElementById("createUserBtn").innerText = "Update User";
+  document.getElementById("cancelUserBtn").style.display = "block";
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteUser(id){
+  if(!confirm("Delete this user?")) return;
+  let users = getUsers().filter(u=>u.id!=id);
+  saveUsers(users); loadUsers();
+}
+function clearUserForm(){
+  document.getElementById("edit_user_id").value=""; document.getElementById("new_name").value=""; document.getElementById("new_username").value=""; document.getElementById("new_emis").value=""; document.getElementById("new_class").value=""; document.getElementById("new_pass").value="";
+  document.getElementById("createUserBtn").innerText="Create User"; document.getElementById("cancelUserBtn").style.display="none";
+}
+function cancelEditUser(){ clearUserForm(); }
 function loadUsers(){
   let users = getUsers();
+  const fClass = document.getElementById("filterUserClass")?.value;
+  const fRole = document.getElementById("filterUserRole")?.value;
   if(currentUser.role === "teacher") users = users.filter(u => u.role === "student");
+  if(fClass) users = users.filter(u=>u.className===fClass);
+  if(fRole) users = users.filter(u=>u.role===fRole);
   document.getElementById("userList").innerHTML = users.map(u => `
-    <div class="list-item"><span><b>${u.name}</b> - ${u.role} - ${u.emis? 'EMIS: '+u.emis : 'Username: '+u.username}</span><span class="badge ${u.role}">${u.role}</span></div>
+    <div class="list-item"><div><b>${u.name}</b> - ${u.role} ${u.className? ' - '+u.className:''}<br><small>${u.emis? 'EMIS: '+u.emis : 'Username: '+u.username}</small></div>
+    <div style="display:flex; gap:6px"><span class="badge ${u.role}">${u.role}</span>
+    <button onclick="editUser('${u.id}')" style="width:auto;padding:6px 10px;background:#3b82f6">Edit</button>
+    <button onclick="deleteUser('${u.id}')" style="width:auto;padding:6px 10px;background:#ef4444">Delete</button></div></div>
   `).join('');
 }
 
+// ASSIGNMENT CRUD
 function addAssignment(){
+  const editId = document.getElementById("edit_ass_id").value;
   const title = document.getElementById("ass_title").value.trim();
   const desc = document.getElementById("ass_desc").value.trim();
-  if(!title) return;
+  const className = document.getElementById("ass_class").value;
+  const subject = document.getElementById("ass_subject").value;
+  if(!title ||!className ||!subject){ alert("Title, Class, Subject required"); return; }
   const list = getAssignments();
-  list.push({ id: Date.now(), title, desc, by: currentUser.name, date: new Date().toLocaleDateString() });
-  saveAssignments(list);
-  loadAssignments();
-  alert("Assignment Added");
+  if(editId){
+    const idx = list.findIndex(a=>a.id==editId);
+    if(idx>-1) list[idx] = {...list[idx], title, desc, className, subject};
+    saveAssignments(list); alert("Assignment Updated");
+  } else {
+    list.push({ id: Date.now(), title, desc, className, subject, by: currentUser.name, date: new Date().toLocaleDateString() });
+    saveAssignments(list); alert("Assignment Added");
+  }
+  clearAssForm(); loadAssignments();
 }
-
+function editAssignment(id){
+  const a = getAssignments().find(x=>x.id==id);
+  if(!a) return;
+  document.getElementById("edit_ass_id").value = a.id;
+  document.getElementById("ass_title").value = a.title;
+  document.getElementById("ass_desc").value = a.desc;
+  document.getElementById("ass_class").value = a.className;
+  fillSubjectDropdowns();
+  document.getElementById("ass_subject").value = a.subject;
+  document.getElementById("assBtn").innerText = "Update Assignment";
+  document.getElementById("cancelAssBtn").style.display="block";
+}
+function deleteAssignment(id){
+  if(!confirm("Delete assignment?")) return;
+  saveAssignments(getAssignments().filter(a=>a.id!=id)); loadAssignments();
+}
+function clearAssForm(){
+  document.getElementById("edit_ass_id").value=""; document.getElementById("ass_title").value=""; document.getElementById("ass_desc").value=""; document.getElementById("ass_class").value=""; document.getElementById("ass_subject").value="";
+  document.getElementById("assBtn").innerText="Add Assignment"; document.getElementById("cancelAssBtn").style.display="none"; document.getElementById("assEditLabel").innerText="";
+}
+function cancelEditAss(){ clearAssForm(); }
 function loadAssignments(){
-  const list = getAssignments();
-  document.getElementById("assList").innerHTML = list.length === 0? "<p>No assignments</p>" : list.map(a => `
-    <div class="list-item"><div><b>${a.title}</b><br><small>${a.desc}</small><br><small>By ${a.by} on ${a.date}</small></div></div>
-  `).join('');
+  let list = getAssignments();
+  const fClass = document.getElementById("filterAssClass")?.value;
+  const fSub = document.getElementById("filterAssSubject")?.value;
+  // Student sees only his class
+  if(currentUser.role==="student" && currentUser.className) list = list.filter(a=>a.className===currentUser.className);
+  if(fClass) list = list.filter(a=>a.className===fClass);
+  if(fSub) list = list.filter(a=>a.subject===fSub);
+  document.getElementById("assList").innerHTML = list.length===0? "<p>No assignments</p>" : list.map(a => `
+    <div class="list-item"><div><b>${a.title}</b> [${a.className} - ${a.subject}]<br><small>${a.desc}</small><br><small>By ${a.by} on ${a.date}</small></div>
+    ${currentUser.role!=="student"? `<div style="display:flex;gap:6px"><button onclick="editAssignment('${a.id}')" style="width:auto;padding:6px 10px;background:#3b82f6">Edit</button><button onclick="deleteAssignment('${a.id}')" style="width:auto;padding:6px 10px;background:#ef4444">Delete</button></div>`:''}
+    </div>`).join('');
 }
 
+// QUIZ CRUD + AUTO GENERATE
 function addQuiz(){
+  const editId = document.getElementById("edit_quiz_id").value;
+  const className = document.getElementById("quiz_class").value;
   const subject = document.getElementById("quiz_sub").value.trim();
   const question = document.getElementById("quiz_q").value.trim();
-  const options = document.getElementById("quiz_opt").value.split(',');
+  const options = document.getElementById("quiz_opt").value.split(',').map(s=>s.trim()).filter(s=>s);
   const answer = document.getElementById("quiz_ans").value.trim();
-  if(!subject ||!question) return;
+  if(!className ||!subject ||!question || options.length<2 ||!answer){ alert("Class, Subject, Question, min 2 options, answer required"); return; }
   const list = getQuizzes();
-  list.push({ id: Date.now(), subject, question, options, answer });
-  saveQuizzes(list);
-  alert("Quiz Added");
-}
-
-function getWeekId(){
-  const now = new Date();
-  const week = Math.ceil(now.getDate()/7);
-  return `${now.getFullYear()}-${now.getMonth()}-${week}`;
-}
-
-function loadQuiz(){
-  const subject = document.getElementById("subjectFilter").value;
-  if(!subject) return;
-  const weekId = getWeekId();
-  const attempts = getAttempts();
-  const already = attempts.find(a => a.emis === currentUser.emis && a.subject === subject && a.week === weekId);
-  if(already){
-    document.getElementById("quizArea").innerHTML = `<p class="success">Already attended ${subject} quiz this week. Score: ${already.score}/${already.total}</p>`;
-    return;
+  if(editId){
+    const idx = list.findIndex(q=>q.id==editId);
+    if(idx>-1) list[idx]={...list[idx], className, subject, question, options, answer};
+    saveQuizzes(list); alert("Quiz Updated");
+  } else {
+    list.push({ id: Date.now(), className, subject, question, options, answer });
+    saveQuizzes(list); alert("Quiz Added");
   }
-  const quizzes = getQuizzes().filter(q => q.subject.toLowerCase() === subject.toLowerCase());
-  if(quizzes.length === 0){
-    document.getElementById("quizArea").innerHTML = "<p>No quiz available for this subject</p>";
-    return;
-  }
-  let html = `<form id="quizForm">`;
-  quizzes.forEach((q,i)=>{
-    html += `<p><b>Q${i+1}: ${q.question}</b></p>`;
-    q.options.forEach(opt=>{
-      html += `<label><input type="radio" name="q${q.id}" value="${opt.trim()}"> ${opt.trim()}</label><br>`;
-    });
-  });
-  html += `<button type="button" onclick="submitQuiz()">Submit Quiz</button></form>`;
-  document.getElementById("quizArea").innerHTML = html;
+  clearQuizForm(); loadQuizBank();
 }
-
-function submitQuiz(){
-  const subject = document.getElementById("subjectFilter").value;
-  const quizzes = getQuizzes().filter(q => q.subject.toLowerCase() === subject.toLowerCase());
-  let score = 0;
-  quizzes.forEach(q=>{
-    const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-    if(selected && selected.value.trim().toLowerCase() === q.answer.trim().toLowerCase()) score++;
-  });
-  const attempts = getAttempts();
-  attempts.push({ emis: currentUser.emis, subject, week: getWeekId(), score, total: quizzes.length, date: new Date().toISOString() });
-  saveAttempts(attempts);
-  document.getElementById("quizResult").innerHTML = `<h3>Your Score: ${score}/${quizzes.length}</h3>`;
-  document.getElementById("quizArea").innerHTML = "";
-  loadHistory();
+function editQuiz(id){
+  const q = getQuizzes().find(x=>x.id==id);
+  if(!q) return;
+  document.getElementById("edit_quiz_id").value = q.id;
+  document.getElementById("quiz_class").value = q.className||"";
+  fillSubjectDropdowns();
+  document.getElementById("quiz_sub").value = q.subject;
+  document.getElementById("quiz_q").value = q.question;
+  document.getElementById("quiz_opt").value = q.options.join(',');
+  document.getElementById("quiz_ans").value = q.answer;
+  document.getElementById("quizBtn").innerText="Update Quiz";
+  document.getElementById("cancelQuizBtn").style.display="block";
 }
-
-function loadHistory(){
-  if(!currentUser || currentUser.role!== "student") return;
-  const attempts = getAttempts().filter(a => a.emis === currentUser.emis);
-  document.getElementById("quizHistory").innerHTML = attempts.map(a => `<p>${a.subject} - Week ${a.week} - Score ${a.score}/${a.total}</p>`).join('');
+function deleteQuiz(id){
+  if(!confirm("Delete quiz?")) return;
+  saveQuizzes(getQuizzes().filter(q=>q.id!=id)); loadQuizBank();
 }
-
-function logout(){
-  localStorage.removeItem("currentUser");
-  location.reload();
+function clearQuizForm(){
+  document.getElementById("edit_quiz_id").value=""; document.getElementById("quiz_q").value=""; document.getElementById("quiz_opt").value=""; document.getElementById("quiz_ans").value="";
+  document.getElementById("quizBtn").innerText="Add Quiz Manually"; document.getElementById("cancelQuizBtn").style.display="none";
 }
-
-// Auto login if already logged in
-if(localStorage.getItem("currentUser")){
-  showDashboard();
-}
-</script>
-</body>
-</html>
+function cancelEditQuiz(){ clearQuizForm(); }
+function loadQuizBank(){
+  let list = getQuizzes();
+  const fClass = document.getElementById("filterQuizClass")?.value;
+  const fSub = document.getElementById("filterQuizSubject")?.value;
+  if(fClass) list = list.filter(q=>q.className===fClass);
+  if(fSub) list = list.filter(q=>q.subject===fSub);
+  if(currentUser.role==="student" && currentUser.className) list = list.filter(q=>q.className===currentUser.className);
+  document.getElementById("quizBankList").innerHTML = list.length===0? "<p>No quiz</p>" : list.map(q=>`
+    <div class="list-item"><div><b>[${q.className} - ${q.subject}] ${q.question}</b><br><small>Options: ${q.options.join(', ')} | Ans: ${q.answer}</small></div>
+ 
