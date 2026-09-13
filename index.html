@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHSS Silattur - School Management</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="loginPage" class="card">
+<h2>GHSS Silattur - Login</h2>
+<select id="role"><option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option></select>
+<input type="text" id="username" placeholder="Username / EMIS Number">
+<div class="password-wrapper"><input type="password" id="password" placeholder="Password"><span class="eye-icon" onclick="togglePassword('password')">👁️</span></div>
+<button onclick="login()">Login</button>
+<div class="link-center"><a href="forgot.html">Forgot Password?</a></div>
+<p id="error" class="error-msg"></p>
+</div>
+
+<div id="dashboardPage" class="dashboard-card" style="display:none;">
+<div class="header"><h2 id="welcomeText"></h2><button onclick="logout()" class="logout-btn">Logout</button></div>
+<div id="createSection">
+<div class="grid">
+<div class="card small">
+<h3 id="createTitle">Create User</h3>
+<input type="hidden" id="edit_user_id">
+<input type="text" id="new_name" placeholder="Full Name">
+<input type="text" id="new_username" placeholder="Username (Owner/Teacher)">
+<input type="text" id="new_emis" placeholder="EMIS Number (Student)">
+<select id="new_class"></select>
+<div class="password-wrapper"><input type="password" id="new_pass" placeholder="Password"><span class="eye-icon" onclick="togglePassword('new_pass')">👁️</span></div>
+<select id="new_role"></select>
+<button onclick="createUser()" id="createUserBtn">Create User</button>
+<button onclick="cancelEditUser()" id="cancelUserBtn" style="display:none;background:#6b7280">Cancel Edit</button>
+</div>
+<div class="card small">
+<h3>Assignment Management</h3><input type="hidden" id="edit_ass_id">
+<input type="text" id="ass_title" placeholder="Assignment Title"><textarea id="ass_desc" placeholder="Description"></textarea>
+<select id="ass_class"></select><select id="ass_subject"></select>
+<button onclick="addAssignment()" id="assBtn">Add Assignment</button><button onclick="cancelEditAss()" id="cancelAssBtn" style="display:none;background:#6b7280">Cancel</button>
+<hr>
+<h3>Quiz - Auto Generator</h3><input type="hidden" id="edit_quiz_id">
+<select id="quiz_class"></select><select id="quiz_sub"></select>
+<input type="text" id="quiz_topic" placeholder="Topic Ex: Photosynthesis"><input type="number" id="quiz_count" value="5" min="1" max="10">
+<button onclick="autoGenerateQuiz()" style="background:#059669">🤖 Auto Generate Quiz from Topic</button><hr>
+<input type="text" id="quiz_q" placeholder="Question Manual"><input type="text" id="quiz_opt" placeholder="Options A,B,C,D"><input type="text" id="quiz_ans" placeholder="Correct Answer">
+<button onclick="addQuiz()" id="quizBtn">Add Quiz Manual</button><button onclick="cancelEditQuiz()" id="cancelQuizBtn" style="display:none;background:#6b7280">Cancel Edit</button>
+</div>
+</div>
+<h3>Users List - Edit/Delete</h3><div style="display:flex;gap:10px"><select id="filterUserClass" onchange="loadUsers()"></select><select id="filterUserRole" onchange="loadUsers()"><option value="">All Roles</option><option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option></select></div><div id="userList"></div>
+</div>
+<div class="card small" style="width:100%;margin-top:20px;"><h3>Assignments - Edit/Delete</h3><div style="display:flex;gap:10px"><select id="filterAssClass" onchange="loadAssignments()"></select><select id="filterAssSubject" onchange="loadAssignments()"></select></div><div id="assList"></div></div>
+<div class="card small" style="width:100%;margin-top:20px;"><h3>Quiz Bank - Edit/Delete</h3><div style="display:flex;gap:10px"><select id="filterQuizClass" onchange="loadQuizBank()"></select><select id="filterQuizSubject" onchange="loadQuizBank()"></select></div><div id="quizBankList"></div></div>
+<div id="studentSection" class="card small" style="width:100%;margin-top:20px;"><h3>Weekly Quiz - One Time Per Week</h3><select id="subjectFilter" onchange="loadQuiz()"></select><div id="quizArea"></div><div id="quizResult"></div><h4>My History</h4><div id="quizHistory"></div></div>
+</div>
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
