@@ -1,0 +1,13 @@
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef2ff;display:flex;justify-content:center;padding:20px;min-height:100vh}
+.card{background:#fff;padding:25px;border-radius:16px;width:400px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+.card.small{width:100%;background:#f9fafb;border:1px solid #e5e7eb;box-shadow:none;margin-top:10px}
+.dashboard-card{background:#fff;padding:20px;border-radius:16px;width:95%;max-width:1150px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ccc;font-size:14px}
+button{width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:10px;font-weight:bold;margin-top:10px;cursor:pointer}
+button:hover{background:#4338ca}.logout-btn{width:auto;background:#ef4444;padding:8px 16px}
+.password-wrapper{position:relative;display:flex;align-items:center}.eye-icon{position:absolute;right:12px;cursor:pointer}
+.error-msg{color:red;text-align:center}.link-center{text-align:center;margin-top:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:768px){.grid{grid-template-columns:1fr}}
+.list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;background:#fff}
+.badge{padding:4px 10px;border-radius:6px;color:#fff;font-size:12px}.badge.owner{background:#4f46e5}.badge.teacher{background:#059669}.badge.student{background:#d97706}
+.header{display:flex;justify-content:space-between;align-items:center}.success{color:green;font-weight:bold}
