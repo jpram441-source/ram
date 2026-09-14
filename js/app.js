@@ -8,18 +8,19 @@ window.onload = function(){
 
 function initDropdowns(){
   let classOpts = CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');
-  document.getElementById('u_class').innerHTML = classOpts;
-  document.getElementById('a_class').innerHTML = '<option value="">Select Class</option>'+classOpts+'<option value="All">All</option>';
-  document.getElementById('q_class').innerHTML = '<option value="">Select Class</option>'+classOpts;
+  if(document.getElementById('u_class')) document.getElementById('u_class').innerHTML = classOpts;
+  if(document.getElementById('a_class')) document.getElementById('a_class').innerHTML = '<option value="">Select Class</option>'+classOpts+'<option value="All">All</option>';
+  if(document.getElementById('q_class')) document.getElementById('q_class').innerHTML = '<option value="">Select Class</option>'+classOpts;
   updateSubjects('a_class','a_subject');
   updateSubjects('q_class','q_subject');
-  document.getElementById('a_class').addEventListener('change',()=>updateSubjects('a_class','a_subject'));
-  document.getElementById('q_class').addEventListener('change',()=>updateSubjects('q_class','q_subject'));
+  if(document.getElementById('a_class')) document.getElementById('a_class').addEventListener('change',()=>updateSubjects('a_class','a_subject'));
+  if(document.getElementById('q_class')) document.getElementById('q_class').addEventListener('change',()=>updateSubjects('q_class','q_subject'));
   updateRoleOptions();
 }
 
 function updateRoleOptions(){
   const roleEl = document.getElementById('u_role');
+  if(!roleEl) return;
   if(!currentUser || currentUser.role==='owner'){
     roleEl.innerHTML = '<option value="">Select Role</option><option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option>';
   } else if(currentUser.role==='teacher'){
@@ -28,9 +29,12 @@ function updateRoleOptions(){
 }
 
 function updateSubjects(classId, subjectId){
-  let cls = document.getElementById(classId).value;
+  let classEl = document.getElementById(classId);
+  let subEl = document.getElementById(subjectId);
+  if(!classEl ||!subEl) return;
+  let cls = classEl.value;
   let subs = getSubjects(cls);
-  document.getElementById(subjectId).innerHTML = subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  subEl.innerHTML = subs.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
 function toggleLoginPass(){
@@ -153,20 +157,70 @@ function renderAssignments(){
   document.getElementById('assignList').innerHTML = assignments.map((a,i)=>`<div class="quiz-q"><b>${a.class} - ${a.subject}</b>: ${a.title}<br><small>${a.by} | ${a.date}</small><br><button onclick="editAssign(${i})" style="margin-top:6px;padding:4px 8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;">Edit</button><button onclick="deleteAssign(${i})" style="margin-top:6px;margin-left:4px;padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:6px;">Delete</button></div>`).join('') || 'No assignments';
 }
 
-// QUIZ AUTO GENERATE
+// QUIZ AUTO GENERATE - FIXED PRO VERSION
 function generateQuiz(){
-  let cls=document.getElementById('q_class').value, sub=document.getElementById('q_subject').value, topic=document.getElementById('q_topic').value.trim(), count=parseInt(document.getElementById('q_count').value)||5;
+  let cls=document.getElementById('q_class').value;
+  let sub=document.getElementById('q_subject').value;
+  let topic=document.getElementById('q_topic').value.trim();
+  let count=parseInt(document.getElementById('q_count').value)||5;
   if(!cls||!topic) return alert('Enter class and topic');
+
   tempQuiz = [];
-  for(let i=1;i<=count;i++){
-    let correct = ['Concept of '+topic, 'Definition of '+topic, 'Application of '+topic, 'Example of '+topic][Math.floor(Math.random()*4)];
-    let opts = [correct, 'Opposite of '+topic, 'Unrelated term '+(i*2), 'Random option '+(i*3)].sort(()=>Math.random()-0.5);
-    tempQuiz.push({q:`Q${i}: What is correct about "${topic}" in ${sub}?`, options:opts, answer:correct, topic, class:cls, subject:sub});
+  let topicLower = topic.toLowerCase();
+
+  let questionTemplates = [];
+
+  if(topicLower.includes('python')){
+    questionTemplates = [
+      {q:`What is Python in ${sub}?`, opts:[`A high-level programming language`,`A snake species`,`A computer hardware`,`An operating system`], ans:0},
+      {q:`Which is correct way to print in Python?`, opts:[`print("Hello")`,`echo "Hello"`,`console.log("Hello")`,`printf("Hello")`], ans:0},
+      {q:`What is the extension of Python file?`, opts:[`.py`,`.java`,`.html`,`.css`], ans:0},
+      {q:`Which keyword is used to define function in Python?`, opts:[`def`,`function`,`func`,`define`], ans:0},
+      {q:`What is Python used for?`, opts:[`Web Development, AI, Data Science`,`Only gaming`,`Only hardware`,`Only networking`], ans:0},
+      {q:`Which is a Python data type?`, opts:[`List`,`Table`,`Chair`,`Book`], ans:0}
+    ];
+  } else {
+    questionTemplates = [
+      {q:`What is the main definition of "${topic}"?`, opts:[`Core concept of ${topic} in ${sub}`,`Opposite of ${topic}`,`Unrelated to ${sub}`,`History of computers`], ans:0},
+      {q:`Which is the best example of "${topic}"?`, opts:[`Practical example of ${topic}`,`Random object`,`Wrong example`,`None of these`], ans:0},
+      {q:`Why is "${topic}" important in ${sub}?`, opts:[`It helps in understanding ${sub} concepts`,`It has no use`,`It is outdated`,`It is only for exams`], ans:0},
+      {q:`Which statement is TRUE about "${topic}"?`, opts:[`${topic} is fundamental in ${sub}`,`${topic} is not used anymore`,`${topic} is a myth`,`${topic} is hardware only`], ans:0},
+      {q:`Application of "${topic}" is:`, opts:[`Used in real-world ${sub} applications`,`Used only in games`,`Never used`,`Used only for drawing`], ans:0},
+      {q:`Who introduced / discovered "${topic}"?`, opts:[`Experts in ${sub} field`,`A sports player`,`A movie actor`,`No one`], ans:0}
+    ];
   }
-  let html = tempQuiz.map((qq, i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" disabled ${o===qq.answer?'checked':''}> ${o} ${o===qq.answer?'(Correct)':''}</label><br>`).join('')}</div>`).join('');
+
+  let shuffled = [...questionTemplates].sort(()=>0.5-Math.random());
+  for(let i=0;i<count;i++){
+    let template = shuffled[i % shuffled.length];
+    let opts = [...template.opts].sort(()=>0.5-Math.random());
+    let correctAnswer = template.opts[template.ans];
+    tempQuiz.push({
+      q:`Q${i+1}: ${template.q}`,
+      options: opts,
+      answer: correctAnswer,
+      topic: topic,
+      class: cls,
+      subject: sub
+    });
+  }
+
+  let html = tempQuiz.map((qq)=>`
+    <div class="quiz-q" style="border-left:4px solid #22c55e">
+      <b>${qq.q}</b><br>
+      ${qq.options.map(o=>`
+        <label style="${o===qq.answer? 'color:green;font-weight:bold;' : ''}">
+          <input type="radio" disabled ${o===qq.answer?'checked':''}> ${o} ${o===qq.answer? '✅' : ''}
+        </label><br>
+      `).join('')}
+    </div>
+  `).join('');
+
   document.getElementById('quizPreview').innerHTML = html;
   document.getElementById('saveQuizBtn').style.display='block';
+  document.getElementById('saveQuizBtn').innerText = 'Submit Quiz';
 }
+
 function saveQuiz(){
   let idx=document.getElementById('q_editIndex').value;
   let quizObj={id:Date.now(), class:document.getElementById('q_class').value, subject:document.getElementById('q_subject').value, topic:document.getElementById('q_topic').value, questions:tempQuiz, by:currentUser.name, date:new Date().toLocaleDateString()};
@@ -191,11 +245,11 @@ function renderStudent(){
 }
 function attendQuiz(idx){
   let q=quizzes[idx];
-  let score=0; let html=q.questions.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label><br>`).join('')}</div>`).join('');
+  let html=q.questions.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label><br>`).join('')}</div>`).join('');
   document.getElementById('myQuiz').innerHTML = html + `<button onclick="submitQuiz(${idx})" class="btn-primary">Submit Quiz</button><div id="quizResult"></div>`;
 }
 function submitQuiz(idx){
   let q=quizzes[idx]; let score=0;
   q.questions.forEach((qq,i)=>{ let sel=document.querySelector(`input[name="q${i}"]:checked`); if(sel && sel.value===qq.answer) score++; });
-  document.getElementById('quizResult').innerHTML = `<h3>Score: ${score}/${q.questions.length}</h3>`;
-             }
+  document.getElementById('quizResult').innerHTML = `<h3 style="color:green;margin-top:15px;">Score: ${score}/${q.questions.length}</h3>`;
+}
