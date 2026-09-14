@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHSS Silattur ERP</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="center-page">
+  <div class="login-card">
+    <h2>GHSS Silattur</h2>
+    <p class="sub">School Management System</p>
+    <input type="text" id="uid" placeholder="Username / EMIS No">
+    <div class="pass-wrap">
+      <input type="password" id="upass" placeholder="Password">
+      <span class="eye" onclick="toggleLoginPass()">👁️</span>
+    </div>
+    <button onclick="login()" class="btn-primary">Login</button>
+    <p id="err" class="error"></p>
+    <a href="forgot.html" class="link">Forgot Password?</a>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+  <header class="topbar">
+    <div>
+      <b id="myName"></b> <span id="myRole" class="badge"></span>
+      <br><small id="myClassInfo"></small>
+    </div>
+    <button onclick="logout()" class="btn-danger-sm">Logout</button>
+  </header>
+
+  <div class="container">
+    <!-- OWNER / TEACHER - USER CREATE -->
+    <div id="userCreatePanel" class="card">
+      <h3 id="formTitle">Create User</h3>
+      <input type="hidden" id="editIndex">
+      <input type="text" id="u_name" placeholder="Full Name">
+      <input type="text" id="u_username" placeholder="Username">
+      <input type="text" id="u_emis" placeholder="EMIS Number">
+      <input type="text" id="u_pass" placeholder="Password">
+      <select id="u_role"></select>
+      <select id="u_class"></select>
+      <button id="submitBtn" onclick="createUser()" class="btn-primary">Submit</button>
+      <button id="cancelBtn" onclick="cancelEdit()" class="btn-secondary" style="display:none;">Cancel</button>
+    </div>
+
+    <!-- ASSIGNMENT CREATE -->
+    <div id="assignCreatePanel" class="card">
+      <h3>Post Assignment</h3>
+      <select id="a_class"></select>
+      <select id="a_subject"></select>
+      <input type="text" id="a_title" placeholder="Assignment Title / Details">
+      <input type="date" id="a_date">
+      <button onclick="postAssignment()" class="btn-primary">Submit</button>
+      <button id="a_cancelBtn" onclick="cancelAssignEdit()" class="btn-secondary" style="display:none;">Cancel</button>
+      <input type="hidden" id="a_editIndex">
+    </div>
+
+    <!-- QUIZ CREATE WITH AUTO GENERATE -->
+    <div id="quizCreatePanel" class="card">
+      <h3>Create Weekly Quiz - Auto Generate</h3>
+      <select id="q_class"></select>
+      <select id="q_subject"></select>
+      <input type="text" id="q_topic" placeholder="Enter Topic (e.g., Photosynthesis)">
+      <input type="number" id="q_count" value="5" min="3" max="10" placeholder="No of Questions">
+      <button onclick="generateQuiz()" class="btn-success">Auto Generate Questions</button>
+      <div id="quizPreview" style="margin-top:15px;"></div>
+      <button onclick="saveQuiz()" class="btn-primary" id="saveQuizBtn" style="display:none;">Submit Quiz</button>
+      <input type="hidden" id="q_editIndex">
+    </div>
+
+    <!-- LISTS -->
+    <div id="userListPanel" class="card">
+      <h3>Users List</h3>
+      <table id="userTable"></table>
+    </div>
+
+    <div id="assignListPanel" class="card">
+      <h3>Assignments</h3>
+      <div id="assignList"></div>
+    </div>
+
+    <div id="quizListPanel" class="card">
+      <h3>Weekly Quiz Tests</h3>
+      <div id="quizList"></div>
+    </div>
+
+    <!-- STUDENT VIEW -->
+    <div id="studentView" class="card" style="display:none;">
+      <h3>My Assignments - <span id="sClass"></span></h3>
+      <div id="myAssignments"></div>
+      <h3 style="margin-top:20px;">My Weekly Quiz</h3>
+      <div id="myQuiz"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
