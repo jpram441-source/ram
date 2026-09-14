@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forgot Password - GHSS Silattur</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.forgot-body{margin:0;background:#eef2ff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.forgot-card{background:#fff;padding:30px;border-radius:16px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+.forgot-card h2{text-align:center;color:#4f46e5;margin-bottom:10px}
+.forgot-card p{font-size:13px;color:#666;text-align:center}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.eye{position:absolute;right:12px;cursor:pointer;user-select:none}
+</style>
+</head>
+<body class="forgot-body">
+<div class="forgot-card">
+<h2>Reset Password</h2>
+<p>Enter Username / EMIS to reset</p>
+
+<input type="text" id="f_user" placeholder="Username / EMIS Number">
+
+<div class="pass-wrap">
+<input type="password" id="f_newpass" placeholder="New Password (min 4 chars)">
+<span class="eye" onclick="togglePass()">👁️</span>
+</div>
+
+<button onclick="resetPassword()" class="btn-primary">Submit</button>
+<div style="text-align:center;margin-top:15px">
+<a href="index.html" class="link">← Back to Login</a>
+</div>
+<p id="msg" style="text-align:center;margin-top:12px;font-weight:bold"></p>
+</div>
+
+<script>
+// Database from localStorage - same as db.js
+function getUsers(){
+  return JSON.parse(localStorage.getItem('ghss_users')) || [];
+}
+function saveUsers(users){
+  localStorage.setItem('ghss_users', JSON.stringify(users));
+}
+
+function togglePass(){
+  const el = document.getElementById("f_newpass");
+  el.type = el.type === "password"? "text" : "password";
+}
+
+function resetPassword(){
+  const userInput = document.getElementById("f_user").value.trim();
+  const newPass = document.getElementById("f_newpass").value.trim();
+  const msgEl = document.getElementById("msg");
+
+  if(!userInput ||!newPass){
+    msgEl.innerText="Please fill all fields";
+    msgEl.style.color="red";
+    return;
+  }
+  if(newPass.length < 4){
+    msgEl.innerText="Password must be at least 4 characters";
+    msgEl.style.color="red";
+    return;
+  }
+
+  let users = getUsers();
+  const idx = users.findIndex(u=> u.username===userInput || u.emis===userInput);
+
+  if(idx===-1){
+    msgEl.innerText="User not found with Username/EMIS";
+    msgEl.style.color="red";
+    return;
+  }
+
+  users[idx].password = newPass;
+  saveUsers(users);
+
+  msgEl.innerText="Password Reset Successful! Redirecting...";
+  msgEl.style.color="green";
+
+  setTimeout(()=>{ window.location.href="index.html"; },1500);
+}
+</script>
+</body>
+</html>
