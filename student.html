@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>My Learning</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span><br><small id="myClassInfo" class="small"></small></div><button onclick="logout()" class="btn-danger-sm">Logout</button></header>
+<div class="container"><div class="card full-width"><h3>My Assignments - <span id="sClass"></span></h3><div id="myAssignments"></div></div><div class="card full-width"><h3>My Weekly Quiz - One Time Per Week</h3><div id="myQuiz"></div><div id="quizAttempt" class="hidden"></div><div id="quizResult" class="hidden"></div></div></div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+let currentUser=requireRole(['student']);myName.innerText=currentUser.name;myRole.innerText=currentUser.role;myRole.className='badge '+currentUser.role;myClassInfo.innerText=currentUser.class+' | EMIS:'+currentUser.emis;sClass.innerText=currentUser.class;
+function getWeek(){let d=new Date(),s=new Date(d.getFullYear(),0,1);return Math.ceil(((d-s)/86400000+s.getDay()+1)/7);}
+function renderStudent(){let ma=assignments.filter(a=>a.class===currentUser.class||a.class==='All');myAssignments.innerHTML=ma.map(a=>`<div class="quiz-q"><b>${a.subject}</b>: ${a.title}<br><small>${a.date} by ${a.by}</small></div>`).join('')||'No assignments';let mq=quizzes.filter(q=>q.class===currentUser.class);myQuiz.innerHTML=mq.map(q=>{let at=attempts.find(a=>a.userEmis===currentUser.emis&&a.quizId===q.id);return `<div class="quiz-q"><b>${q.subject} - ${q.topic}</b><br><small>${q.date}</small> | ${q.list.length} Qs<br>${at?`<span style="color:green">Attempted - Score: ${at.score}/${q.list.length}</span>`:`<button onclick="startQuiz(${q.id})" class="action-btn edit">Attend Quiz</button>`}</div>`;}).join('')||'No quiz';}
+let activeQuiz=null;function startQuiz(id){let q=quizzes.find(x=>x.id===id);let w=getWeek();if(attempts.find(a=>a.userEmis===currentUser.emis&&a.quizId===id&&a.week===w)){alert('Already attended this week - one time only');return;}activeQuiz=q;let html=`<h4>${q.subject} - ${q.topic}</h4>`+q.list.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label><br>`).join('')}</div>`).join('')+`<button onclick="submitQuiz()" class="btn-primary">Submit</button> <button onclick="closeQuiz()" class="btn-secondary">Cancel</button>`;quizAttempt.innerHTML=html;quizAttempt.classList.remove('hidden');}
+function closeQuiz(){quizAttempt.classList.add('hidden');quizResult.classList.add('hidden');}
+function submitQuiz(){let s=0;activeQuiz.list.forEach((qq,i)=>{let sel=document.querySelector(`input[name="q${i}"]:checked`);if(sel&&sel.value===qq.answer)s++;});let w=getWeek();attempts.push({userEmis:currentUser.emis,quizId:activeQuiz.id,score:s,week:w,date:new Date().toLocaleString()});saveAll();quizAttempt.classList.add('hidden');quizResult.innerHTML=`<div class="quiz-q" style="border-left:4px solid var(--success)"><h3>Result: ${s}/${activeQuiz.list.length}</h3></div>`;quizResult.classList.remove('hidden');renderStudent();}
+renderStudent();
+</script>
+</body>
+</html>
