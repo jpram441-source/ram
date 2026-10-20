@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Users</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span></div><div><a href="dashboard.html" class="link" style="display:inline">Home</a> <button onclick="logout()" class="btn-danger-sm">Logout</button></div></header>
+<div class="container">
+<div class="card"><h3 id="formTitle">Create User</h3><input type="hidden" id="editIndex"><input type="text" id="u_name" placeholder="Full Name"><input type="text" id="u_username" placeholder="Username (unique)"><input type="text" id="u_emis" placeholder="EMIS Number"><div class="pass-wrap"><input type="text" id="u_pass" placeholder="Password"><span class="eye" onclick="togglePass('u_pass')">👁️</span></div><select id="u_role"></select><select id="u_class"></select><button id="submitBtn" onclick="createUser()" class="btn-primary">Submit</button><button id="cancelBtn" onclick="cancelEdit()" class="btn-secondary hidden">Cancel</button></div>
+<div class="card"><h3>Users List</h3><select id="filterClass" onchange="renderUsers()"></select><select id="filterRole" onchange="renderUsers()"><option value="">All Roles</option><option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option></select><table id="userTable"></table></div>
+</div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+let currentUser=requireRole(['owner','teacher']);
+myName.innerText=currentUser.name;myRole.innerText=currentUser.role;myRole.className='badge '+currentUser.role;
+function init(){let co=CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');u_class.innerHTML=co+'<option value="All">All</option>';filterClass.innerHTML='<option value="">All Classes</option>'+co+'<option value="All">All</option>';updateRole();}
+function updateRole(){if(currentUser.role==='owner') u_role.innerHTML='<option value="">Select Role</option><option value="owner">Owner</option><option value="teacher">Teacher</option><option value="student">Student</option>';else u_role.innerHTML='<option value="student">Student</option>';}
+function createUser(){let idx=editIndex.value,name=u_name.value.trim(),username=u_username.value.trim(),emis=u_emis.value.trim(),pass=u_pass.value.trim(),role=u_role.value,cls=u_class.value;if(!name||!username||!pass||!role){alert('Fill all');return;}if(currentUser.role==='teacher'&&role!=='student'){alert('Teacher can create only Student');return;}if(idx!==''){users[idx]={name,username,emis,password:pass,role,class:cls};}else{if(users.find(u=>u.username===username)){alert('Username exists');return;}users.push({name,username,emis,password:pass,role,class:cls});}saveAll();cancelEdit();renderUsers();alert('Submitted Successfully');}
+function editUser(i){let u=users[i];if(currentUser.role==='teacher'&&u.role!=='student'){alert('Not allowed');return;}editIndex.value=i;u_name.value=u.name;u_username.value=u.username;u_emis.value=u.emis;u_pass.value=u.password;u_role.value=u.role;u_class.value=u.class;formTitle.innerText='Edit User - '+u.name;submitBtn.innerText='Submit';cancelBtn.classList.remove('hidden');}
+function cancelEdit(){editIndex.value='';u_name.value='';u_username.value='';u_emis.value='';u_pass.value='';formTitle.innerText='Create User';submitBtn.innerText='Submit';cancelBtn.classList.add('hidden');}
+function deleteUser(i){if(users[i].username===currentUser.username){alert('Cannot delete self');return;}if(confirm('Delete '+users[i].name+'?')){users.splice(i,1);saveAll();renderUsers();}}
+function renderUsers(){let fc=filterClass.value,fr=filterRole.value,html='<tr><th>Name</th><th>Role</th><th>Class</th><th>EMIS/ID</th><th>Action</th></tr>';users.forEach((u,i)=>{if(currentUser.role==='teacher'&&u.role!=='student')return;if(fc&&u.class!==fc)return;if(fr&&u.role!==fr)return;html+=`<tr><td>${u.name}<br><small>${u.emis}</small></td><td><span class="badge ${u.role}">${u.role}</span></td><td>${u.class}</td><td>${u.username}</td><td><button onclick="editUser(${i})" class="action-btn edit">Edit</button><button onclick="deleteUser(${i})" class="action-btn del">Delete</button></td></tr>`;});userTable.innerHTML=html;}
+init();renderUsers();
+</script>
+</body>
+</html>
