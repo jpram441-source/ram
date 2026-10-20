@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dashboard</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span><br><small id="myClassInfo" class="small"></small></div><button onclick="logout()" class="btn-danger-sm">Logout</button></header>
+<div style="max-width:1100px;margin:0 auto;padding:16px"><div class="nav-links"><a href="dashboard.html" class="active">Home</a><a href="users.html" id="navUsers">Users</a><a href="assignments.html">Assignments</a><a href="quizzes.html">Quiz</a><a href="student.html" id="navStudent">My Learning</a></div></div>
+<div class="container"><div class="card full-width"><h3>Welcome GHSS Silattur ERP</h3><p class="small">Owner can create Teacher/Student. Teacher can create only Student. Student login with EMIS.</p><div id="stats"></div></div><div class="card"><h3>Quick Actions</h3><div id="quick"></div></div><div class="card"><h3>Recent Assignments</h3><div id="recentAssign"></div></div></div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+let user=requireLogin();
+myName.innerText=user.name;myRole.innerText=user.role;myRole.className='badge '+user.role;myClassInfo.innerText=user.class+' | EMIS:'+user.emis;
+if(user.role==='student') navUsers.style.display='none'; if(user.role!=='student') navStudent.style.display='none';
+stats.innerHTML=`Total Users: ${users.length} | Assignments: ${assignments.length} | Quizzes: ${quizzes.length}`;
+recentAssign.innerHTML=assignments.slice(-5).reverse().map(a=>`<div class="quiz-q"><b>${a.class}-${a.subject}</b>: ${a.title}<br><small>${a.date}</small></div>`).join('')||'No assignments';
+let qh=''; if(user.role!=='student') qh=`<a href="users.html" class="btn-primary" style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Create User</a> <a href="assignments.html" class="btn-primary" style="display:inline-block;width:auto;padding:8px 14px;background:#0ea5e9;text-decoration:none">Post Assignment</a> <a href="quizzes.html" class="btn-primary" style="display:inline-block;width:auto;padding:8px 14px;background:#10b981;text-decoration:none">Create Quiz</a>`; else qh=`<a href="student.html" class="btn-primary" style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Go to Learning</a>`; quick.innerHTML=qh;
+</script>
+</body>
+</html>
