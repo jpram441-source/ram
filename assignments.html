@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Assignments</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span></div><div><a href="dashboard.html" class="link" style="display:inline">Home</a> <button onclick="logout()" class="btn-danger-sm">Logout</button></div></header>
+<div class="container">
+<div class="card"><h3>Post Assignment</h3><input type="hidden" id="a_editIndex"><select id="a_class"></select><select id="a_subject"></select><input type="text" id="a_title" placeholder="Assignment Title / Details"><input type="date" id="a_date"><button onclick="postAssignment()" class="btn-primary">Submit</button><button id="a_cancelBtn" onclick="cancelAssignEdit()" class="btn-secondary hidden">Cancel</button></div>
+<div class="card"><h3>Assignments</h3><div id="assignList"></div></div>
+</div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+let currentUser=requireRole(['owner','teacher']);myName.innerText=currentUser.name;myRole.innerText=currentUser.role;myRole.className='badge '+currentUser.role;
+function init(){let co=CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');a_class.innerHTML='<option value="">Select Class</option>'+co+'<option value="All">All</option>';updateSubjects();a_class.addEventListener('change',updateSubjects);}
+function updateSubjects(){let cls=a_class.value,subs=getSubjects(cls);a_subject.innerHTML=subs.map(s=>`<option value="${s}">${s}</option>`).join('');}
+function postAssignment(){let cls=a_class.value,sub=a_subject.value,title=a_title.value,date=a_date.value,idx=a_editIndex.value;if(!cls||!title){alert('Fill details');return;}let obj={id:idx!==''?assignments[idx].id:Date.now(),class:cls,subject:sub,title,date:date||new Date().toLocaleDateString(),by:currentUser.name};if(idx!=='')assignments[idx]=obj;else assignments.push(obj);saveAll();cancelAssignEdit();renderAssignments();}
+function editAssign(i){let a=assignments[i];a_class.value=a.class;updateSubjects();a_subject.value=a.subject;a_title.value=a.title;a_editIndex.value=i;a_cancelBtn.classList.remove('hidden');}
+function cancelAssignEdit(){a_editIndex.value='';a_title.value='';a_cancelBtn.classList.add('hidden');}
+function deleteAssign(i){if(confirm('Delete?')){assignments.splice(i,1);saveAll();renderAssignments();}}
+function renderAssignments(){assignList.innerHTML=assignments.map((a,i)=>`<div class="quiz-q"><b>${a.class} - ${a.subject}</b>: ${a.title}<br><small>${a.by} | ${a.date}</small><br><button onclick="editAssign(${i})" class="action-btn edit">Edit</button><button onclick="deleteAssign(${i})" class="action-btn del">Delete</button></div>`).join('')||'No assignments';}
+init();renderAssignments();
+</script>
+</body>
+</html>
