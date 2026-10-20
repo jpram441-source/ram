@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Forgot Password</title><link rel="stylesheet" href="css/style.css"></head>
+<body class="center-page">
+<div class="login-card">
+<h2>Reset Password</h2><p class="sub">Enter Username / EMIS to reset</p>
+<input type="text" id="f_user" placeholder="Username / EMIS">
+<div class="pass-wrap"><input type="password" id="f_newpass" placeholder="New Password (min 4)"><span class="eye" onclick="togglePass('f_newpass')">👁️</span></div>
+<button onclick="resetPassword()" class="btn-primary">Submit</button>
+<a href="index.html" class="link">← Back to Login</a><p id="msg" style="text-align:center;margin-top:12px;font-weight:bold"></p>
+</div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+function resetPassword(){
+  let u=document.getElementById('f_user').value.trim(), p=document.getElementById('f_newpass').value.trim(), m=document.getElementById('msg');
+  if(!u||!p){m.innerText='Fill all fields';m.style.color='red';return;}
+  if(p.length<4){m.innerText='Min 4 chars';m.style.color='red';return;}
+  let i=users.findIndex(x=>x.username===u||x.emis===u);
+  if(i===-1){m.innerText='User not found';m.style.color='red';return;}
+  users[i].password=p;saveAll();m.innerText='Success! Redirecting...';m.style.color='green';setTimeout(()=>location.href='index.html',1200);
+}
+</script>
+</body>
+</html>
