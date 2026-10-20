@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Quiz</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span></div><div><a href="dashboard.html" class="link" style="display:inline">Home</a> <button onclick="logout()" class="btn-danger-sm">Logout</button></div></header>
+<div class="container">
+<div class="card"><h3>Create Weekly Quiz - Auto Generate From Book</h3><input type="hidden" id="q_editIndex"><select id="q_class"></select><select id="q_subject"></select><input type="text" id="q_topic" placeholder="Enter Topic (e.g., Photosynthesis, Python, Newton)"><input type="number" id="q_count" value="5" min="3" max="10"><button onclick="generateQuiz()" class="btn-primary" style="background:#10b981">Auto Generate Questions</button><div id="quizPreview" style="margin-top:15px;"></div><button onclick="saveQuiz()" class="btn-primary hidden" id="saveQuizBtn">Submit Quiz</button><button id="q_cancelBtn" onclick="cancelQuizEdit()" class="btn-secondary hidden">Cancel</button></div>
+<div class="card"><h3>Weekly Quiz List</h3><div id="quizList"></div></div>
+</div>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
+<script>
+let currentUser=requireRole(['owner','teacher']);myName.innerText=currentUser.name;myRole.innerText=currentUser.role;myRole.className='badge '+currentUser.role;let tempQuiz=[];
+function init(){let co=CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');q_class.innerHTML='<option value="">Select Class</option>'+co;updateSubjects();q_class.addEventListener('change',updateSubjects);}
+function updateSubjects(){let cls=q_class.value,subs=getSubjects(cls);q_subject.innerHTML=subs.map(s=>`<option value="${s}">${s}</option>`).join('');}
+function generateQuiz(){let cls=q_class.value,sub=q_subject.value,topic=q_topic.value.trim(),count=parseInt(q_count.value)||5;if(!cls||!topic){alert('Enter class and topic');return;}tempQuiz=generateBookQuestions(topic,sub,count).map(q=>({...q,class:cls}));let html=tempQuiz.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" name="pq${i}" value="${o}"> ${o}</label><br>`).join('')}<small>Ans: ${qq.answer}</small></div>`).join('');quizPreview.innerHTML=html;saveQuizBtn.classList.remove('hidden');}
+function saveQuiz(){if(tempQuiz.length==0){alert('Generate first');return;}let idx=q_editIndex.value,obj={id:idx!==''?quizzes[idx].id:Date.now(),class:q_class.value,subject:q_subject.value,topic:q_topic.value,list:tempQuiz,by:currentUser.name,date:new Date().toLocaleDateString()};if(idx!=='')quizzes[idx]=obj;else quizzes.push(obj);saveAll();cancelQuizEdit();renderQuizList();alert('Quiz Submitted');}
+function editQuiz(i){let q=quizzes[i];q_class.value=q.class;updateSubjects();q_subject.value=q.subject;q_topic.value=q.topic;q_editIndex.value=i;tempQuiz=q.list;quizPreview.innerHTML=tempQuiz.map(qq=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.join(', ')}<br>Ans: ${qq.answer}</div>`).join('');saveQuizBtn.classList.remove('hidden');q_cancelBtn.classList.remove('hidden');}
+function cancelQuizEdit(){q_editIndex.value='';quizPreview.innerHTML='';saveQuizBtn.classList.add('hidden');q_cancelBtn.classList.add('hidden');tempQuiz=[];}
+function deleteQuiz(i){if(confirm('Delete quiz?')){quizzes.splice(i,1);saveAll();renderQuizList();}}
+function renderQuizList(){quizList.innerHTML=quizzes.map((q,i)=>`<div class="quiz-q"><b>${q.class} - ${q.subject} - ${q.topic}</b><br><small>${q.by} | ${q.date} | ${q.list.length} Qs</small><br><button onclick="editQuiz(${i})" class="action-btn edit">Edit</button><button onclick="deleteQuiz(${i})" class="action-btn del">Delete</button></div>`).join('')||'No quiz';}
+init();renderQuizList();
+</script>
+</body>
+</html>
