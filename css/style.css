@@ -1,0 +1,32 @@
+:root{--primary:#4f46e5;--primary-dark:#4338ca;--bg:#f1f5f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--danger:#ef4444;--border:#e2e8f0}
+*{box-sizing:border-box;font-family:Inter,Segoe UI,Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+.center-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--card);padding:32px;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.08);width:100%;max-width:420px}
+.login-card h2{margin:0 0 6px;text-align:center;color:var(--primary)}
+.sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:22px}
+input,select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin:8px 0;font-size:14px}
+.btn-primary{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;margin-top:10px}
+.btn-secondary{padding:10px 14px;background:#e2e8f0;border:none;border-radius:8px;cursor:pointer;margin-top:8px}
+.btn-danger-sm{padding:8px 12px;background:var(--danger);color:#fff;border:none;border-radius:8px;cursor:pointer}
+.link{color:var(--primary);text-decoration:none;font-size:13px;display:block;text-align:center;margin-top:12px}
+.error{color:var(--danger);font-size:13px;text-align:center;min-height:18px}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.eye{position:absolute;right:12px;cursor:pointer;font-size:18px}
+.topbar{background:var(--card);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.05);position:sticky;top:0;z-index:10}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff}
+.badge.owner{background:#7c3aed}.badge.teacher{background:#0ea5e9}.badge.student{background:#10b981}
+.container{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.04);border:1px solid var(--border)}
+.nav-links{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.nav-links a{padding:8px 14px;background:var(--primary);color:#fff;border-radius:8px;text-decoration:none;font-size:13px}
+.nav-links a.active{background:var(--primary-dark)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 8px;background:#f8fafc;border-bottom:1px solid var(--border)}
+td{padding:10px 8px;border-bottom:1px solid #f1f5f9}
+.quiz-q{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;margin:8px 0}
+.small{font-size:12px;color:var(--muted)}
+.action-btn{padding:5px 10px;border:none;border-radius:6px;cursor:pointer;color:#fff;margin:2px;font-size:12px}
+.action-btn.edit{background:#3b82f6}.action-btn.del{background:var(--danger)}
+.full-width{grid-column:1 / -1}
+.hidden{display:none!important}
