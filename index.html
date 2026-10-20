@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHSS Silattur - Login</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="center-page">
+  <div class="login-card">
+    <h2>GHSS Silattur</h2>
+    <p class="sub">School Management System</p>
+    <input type="text" id="uid" placeholder="Username / EMIS No">
+    <div class="pass-wrap">
+      <input type="password" id="upass" placeholder="Password">
+      <span class="eye" onclick="togglePass('upass')">👁️</span>
+    </div>
+    <button onclick="login()" class="btn-primary">Login</button>
+    <p id="err" class="error"></p>
+    <a href="forgot.html" class="link">Forgot Password?</a>
+  </div>
+</div>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script>
+function login(){
+  let u=document.getElementById('uid').value.trim();
+  let p=document.getElementById('upass').value.trim();
+  if(!u||!p){document.getElementById('err').innerText='Fill all fields';return;}
+  let f=users.find(x=>(x.username===u||x.emis===u)&&x.password===p);
+  if(f){localStorage.setItem('ghss_current',JSON.stringify(f));window.location.href='dashboard.html';}
+  else{document.getElementById('err').innerText='Invalid ID / EMIS / Password';}
+}
+</script>
+</body>
+</html>
