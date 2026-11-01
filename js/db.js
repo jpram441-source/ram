@@ -18,52 +18,70 @@ function saveAll(){
   localStorage.setItem('ghss_attempts',JSON.stringify(attempts));
   localStorage.setItem('ghss_books',JSON.stringify(books));
 }
-function cleanText(s){
-  return s.replace(/>>>\s*str1.*?\n/g,'').replace(/>>>\s*print.*?\n/g,'').replace(/\s+/g,' ').trim();
-}
+
+// --- NEW CLEAN TAMIL QUIZ GENERATOR ---
+// PDF encoding odaindhaalum clean Tamil varum
 function generateTamilQuiz(topic, subject, cls, count){
-  let key = cls+"_"+subject;
-  let bookText = books[key] || "";
-  if(!bookText){
-    Object.keys(books).forEach(k=>{ if(k.includes(subject)) bookText+=books[k]+" "; });
-  }
-  let isTamil = /[\u0B80-\u0BFF]/.test(topic) || /[\u0B80-\u0BFF]/.test(bookText);
-  // Clean book text - remove >>> code junk
-  bookText = bookText.replace(/>>>\s*str1="How are you".*?print.*?/g,' ').replace(/1\s*12th Computer Science.*?Chapter.*?\d+/g,' ');
-  let sentences = bookText.split(/[.!?।\n]/).map(s=>s.trim()).filter(s=>s.length>20 && !s.includes('>>>') && !s.includes('print (str1'));
-  let topicSentences = sentences.filter(s=>s.toLowerCase().includes(topic.toLowerCase()));
-  let pool = topicSentences.length>=count ? topicSentences : sentences;
-  pool = [...new Set(pool)].sort(()=>Math.random()-0.5).slice(0,count*2);
-  let questions=[];
-  let used=new Set();
-  for(let i=0;i<count && pool.length>0;i++){
-    let src = pool[i % pool.length];
-    if(!src || used.has(src)) continue;
-    used.add(src);
-    let correct = cleanText(src).substring(0,120);
-    if(correct.length<10) continue;
-    let others = sentences.filter(s=>s!==src).sort(()=>Math.random()-0.5).slice(0,3).map(s=>cleanText(s).substring(0,120));
-    while(others.length<3){
-      others.push(isTamil ? `தவறான விருப்பம் ${others.length+1}` : `Wrong option ${others.length+1}`);
+  let bookKey = cls+"_"+subject;
+  let hasBook = books[bookKey] || Object.keys(books).some(k=>k.includes(subject));
+  let isTamil = /[\u0B80-\u0BFF]/.test(topic) || hasBook;
+
+  // Clean Tamil Question Bank based on Topic - TN Book 12th CS
+  const tamilBank = {
+    "tuple": [
+      {q:"Tuple என்றால் என்ன?", correct:"ஒரு வரிசையை tuple என்று அழைக்கப்படுகிறது", wrong:["மாற்றக்கூடிய தரவு அமைப்பு","tuple என்பது செயல்பாடு","tuple என்பது loop"]},
+      {q:"Tuple பண்பு என்ன?", correct:"Tuple மாற்ற முடியாதது (Immutable)", wrong:["Tuple மாற்றக்கூடியது","Tuple key இருக்கும்","Tuple வெறும் எண்களை மட்டும் கொண்டது"]},
+      {q:"Tuple எவ்வாறு உருவாக்குவோம்?", correct:"() அடைப்புக்குறிகளை பயன்படுத்தி", wrong:["[] பயன்படுத்தி","{} பயன்படுத்தி","<> பயன்படுத்தி"]}
+    ],
+    "list": [
+      {q:"பட்டியல் (List) என்றால் என்ன?", correct:"பல மதிப்புகளை சேமிக்கும் மாறக்கூடிய தொகுப்பு", wrong:["ஒரு மதிப்பை மட்டும் சேமிக்கும்","மாற்ற முடியாத தொகுப்பு","செயல்பாட்டின் பெயர்"]},
+    ],
+    "string": [
+      {q:"சரம் (String) என்றால் என்ன?", correct:"எழுத்துக்களின் தொகுப்பு", wrong:["எண்களின் தொகுப்பு மட்டும்","பூலியன் மதிப்பு","சரம் என்பது எண் வகை"]}
+    ],
+    "python": [
+      {q:"பைத்தானில் print() செயல்பாடு என்ன செய்யும்?", correct:"திரையில் வெளியீட்டை அச்சிடும்", wrong:["உள்ளீடு பெறும்","கோப்பை மூடும்","பிழையை நீக்கும்"]}
+    ]
+  };
+
+  let topicLower = topic.toLowerCase();
+  let pool = [];
+  // Find matching bank
+  Object.keys(tamilBank).forEach(k=>{
+    if(topicLower.includes(k) || k.includes(topicLower)){
+      pool = pool.concat(tamilBank[k]);
     }
-    let all = [correct, ...others];
-    all=[...new Set(all)];
-    while(all.length<4) all.push(isTamil ? `கூடுதல் விருப்பம் ${all.length}` : `Extra ${all.length}`);
-    all=all.sort(()=>Math.random()-0.5);
-    let qText = isTamil ? `கேள்வி ${i+1}: ${correct.substring(0,80)}?` : `Q${i+1}: ${topic} - ${correct.substring(0,80)}?`;
-    // If topic itself is Tamil, keep Tamil question
-    if(isTamil && topic.length>2){
-      qText = `கேள்வி ${i+1}: ${topic} பற்றி கீழ்க்கண்டவற்றில் சரியானது எது?`;
+  });
+  // If no specific bank, create generic clean Tamil questions
+  if(pool.length===0){
+    for(let i=0;i<count+5;i++){
+      if(isTamil){
+        pool.push({
+          q:`${topic} பற்றி கீழ்க்கண்டவற்றில் சரியான கூற்று எது?`,
+          correct:`${topic} என்பது பாடத்தின் முக்கிய கருத்தாகும்`,
+          wrong:[`${topic} என்பது பாடத்துடன் தொடர்பில்லாதது`,`${topic} என்பது தவறான விளக்கம்`,`${topic} என்பது கணக்கு மட்டுமே`]
+        });
+      } else {
+        pool.push({
+          q:`What is correct about ${topic}?`,
+          correct:`${topic} is an important concept from the book`,
+          wrong:[`${topic} is not related to chapter`,`${topic} is wrong concept`,`${topic} is only a number`]
+        });
+      }
     }
-    questions.push({q:qText, options:all, answer:correct});
   }
-  // Fallback if no good sentences
-  if(questions.length===0){
-    for(let i=0;i<count;i++){
-      let correct = isTamil ? `${topic} பற்றிய சரியான விளக்கம் ${i+1}` : `${topic} correct explanation ${i+1}`;
-      let opts=[correct, isTamil?`${topic} தவறானது A`: `${topic} wrong A`, isTamil?`${topic} தவறானது B`: `${topic} wrong B`, isTamil?`${topic} தவறானது C`: `${topic} wrong C`].sort(()=>Math.random()-0.5);
-      questions.push({q:isTamil?`கேள்வி ${i+1}: ${topic} பற்றி சரியானது?`:`Q${i+1}: ${topic}?`, options:opts, answer:correct});
-    }
+
+  // Shuffle and take unique, 4 options each
+  pool = pool.sort(()=>Math.random()-0.5);
+  let finalQuestions=[];
+  let usedSet=new Set();
+  for(let item of pool){
+    if(finalQuestions.length>=count) break;
+    if(usedSet.has(item.q)) continue;
+    usedSet.add(item.q);
+    let allOptions=[item.correct, ...item.wrong];
+    allOptions=[...new Set(allOptions)].sort(()=>Math.random()-0.5);
+    finalQuestions.push({q:item.q, options:allOptions, answer:item.correct});
   }
-  return questions;
+  return finalQuestions;
 }
