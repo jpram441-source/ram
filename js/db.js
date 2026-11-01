@@ -19,69 +19,62 @@ function saveAll(){
   localStorage.setItem('ghss_books',JSON.stringify(books));
 }
 
-// --- NEW CLEAN TAMIL QUIZ GENERATOR ---
-// PDF encoding odaindhaalum clean Tamil varum
+// --- 100% CLEAN TAMIL QUESTION BANK - PDF ah thodave koodathu ---
+const QUESTION_BANK = {
+  "tuple": [
+    {q:"Tuple பற்றி கீழ்க்கண்டவற்றில் சரியானது எது?", correct:"Tuples-ஐ மாற்ற முடியாது (Immutable)", wrong:["Tuples-ஐ மாற்ற முடியும்","Tuple என்பது loop ஆகும்","Tuple-ல் key இருக்கும்"]},
+    {q:"Tuple-ஐ எவ்வாறு உருவாக்குவோம்?", correct:"() அடைப்புக்குறிகளை பயன்படுத்தி", wrong:["[] பயன்படுத்தி","{} பயன்படுத்தி","<> பயன்படுத்தி"]},
+    {q:"Tuple என்றால் என்ன?", correct:"ஒரு வரிசையை Tuple என்று அழைக்கப்படுகிறது", wrong:["மாற்றக்கூடிய தொகுப்பு","செயல்பாட்டின் பெயர்","எண் வகை மட்டும்"]},
+    {q:"4 Tuples-ஐ புதுப்பித்தல் மற்றும் நீக்குதல்?", correct:"Tuples-ஐ மாற்ற முடியாது என முன்பே அறிவோம்", wrong:["Tuples-ஐ எளிதில் மாற்றலாம்","Tuples-க்கு append உண்டு","Tuples-ஐ delete செய்ய முடியாது"]},
+  ],
+  "list": [
+    {q:"List பற்றி சரியானது எது?", correct:"List மாற்றக்கூடியது (Mutable)", wrong:["List மாற்ற முடியாதது","List-ல் ஒரு மதிப்பு மட்டும்","List என்பது function"]},
+    {q:"List-ஐ உருவாக்குவது?", correct:"[] சதுர அடைப்புக்குறி", wrong:["() வட்ட அடைப்பு","{} சுருள் அடைப்பு","<> கோண அடைப்பு"]},
+  ],
+  "computer": [
+    {q:"Python-ல் input() என்ன செய்யும்?", correct:"பயனரிடமிருந்து உள்ளீடு பெறும்", wrong:["வெளியீடு அச்சிடும்","கோப்பை மூடும்","பிழையை நீக்கும்"]},
+    {q:"CSV கோப்பில் dialect என்றால் என்ன?", correct:"பிரிப்பான் மற்றும் மேற்கோள் குறியை வரையறுக்கும்", wrong:["CSV-ஐ மூடும் கட்டளை","புதிய கோப்பு உருவாக்கும்","எண்களை மட்டும் சேமிக்கும்"]},
+    {q:"print() செயல்பாடு?", correct:"திரையில் வெளியீட்டை அச்சிடும்", wrong:["உள்ளீடு பெறும்","கோப்பை நீக்கும்","வரியை மட்டும் படிக்கும்"]},
+  ],
+  "default_tamil": [
+    {q:"பாட புத்தகத்தின் முக்கிய கருத்து எது?", correct:"பாடத்தின் அடிப்படை கருத்தை புரிந்துகொள்வது", wrong:["பாடத்துடன் தொடர்பில்லாதது","தவறான விளக்கம்","எண் மட்டுமே"]},
+    {q:"கணினி அறிவியல் பாடத்தில் முக்கியம்?", correct:"தரவு அமைப்புகளை புரிந்துகொள்வது", wrong:["வெறும் தட்டச்சு மட்டும்","விளையாட்டு மட்டும்","பாடல் கேட்பது"]},
+  ]
+};
+
 function generateTamilQuiz(topic, subject, cls, count){
-  let bookKey = cls+"_"+subject;
-  let hasBook = books[bookKey] || Object.keys(books).some(k=>k.includes(subject));
-  let isTamil = /[\u0B80-\u0BFF]/.test(topic) || hasBook;
-
-  // Clean Tamil Question Bank based on Topic - TN Book 12th CS
-  const tamilBank = {
-    "tuple": [
-      {q:"Tuple என்றால் என்ன?", correct:"ஒரு வரிசையை tuple என்று அழைக்கப்படுகிறது", wrong:["மாற்றக்கூடிய தரவு அமைப்பு","tuple என்பது செயல்பாடு","tuple என்பது loop"]},
-      {q:"Tuple பண்பு என்ன?", correct:"Tuple மாற்ற முடியாதது (Immutable)", wrong:["Tuple மாற்றக்கூடியது","Tuple key இருக்கும்","Tuple வெறும் எண்களை மட்டும் கொண்டது"]},
-      {q:"Tuple எவ்வாறு உருவாக்குவோம்?", correct:"() அடைப்புக்குறிகளை பயன்படுத்தி", wrong:["[] பயன்படுத்தி","{} பயன்படுத்தி","<> பயன்படுத்தி"]}
-    ],
-    "list": [
-      {q:"பட்டியல் (List) என்றால் என்ன?", correct:"பல மதிப்புகளை சேமிக்கும் மாறக்கூடிய தொகுப்பு", wrong:["ஒரு மதிப்பை மட்டும் சேமிக்கும்","மாற்ற முடியாத தொகுப்பு","செயல்பாட்டின் பெயர்"]},
-    ],
-    "string": [
-      {q:"சரம் (String) என்றால் என்ன?", correct:"எழுத்துக்களின் தொகுப்பு", wrong:["எண்களின் தொகுப்பு மட்டும்","பூலியன் மதிப்பு","சரம் என்பது எண் வகை"]}
-    ],
-    "python": [
-      {q:"பைத்தானில் print() செயல்பாடு என்ன செய்யும்?", correct:"திரையில் வெளியீட்டை அச்சிடும்", wrong:["உள்ளீடு பெறும்","கோப்பை மூடும்","பிழையை நீக்கும்"]}
-    ]
-  };
-
-  let topicLower = topic.toLowerCase();
+  let topicLower = topic.toLowerCase().trim();
   let pool = [];
-  // Find matching bank
-  Object.keys(tamilBank).forEach(k=>{
-    if(topicLower.includes(k) || k.includes(topicLower)){
-      pool = pool.concat(tamilBank[k]);
+  
+  // Find relevant questions from bank
+  Object.keys(QUESTION_BANK).forEach(key=>{
+    if(key==="default_tamil") return;
+    if(topicLower.includes(key) || key.includes(topicLower) || subject.toLowerCase().includes(key)){
+      pool = pool.concat(QUESTION_BANK[key]);
     }
   });
-  // If no specific bank, create generic clean Tamil questions
-  if(pool.length===0){
-    for(let i=0;i<count+5;i++){
-      if(isTamil){
-        pool.push({
-          q:`${topic} பற்றி கீழ்க்கண்டவற்றில் சரியான கூற்று எது?`,
-          correct:`${topic} என்பது பாடத்தின் முக்கிய கருத்தாகும்`,
-          wrong:[`${topic} என்பது பாடத்துடன் தொடர்பில்லாதது`,`${topic} என்பது தவறான விளக்கம்`,`${topic} என்பது கணக்கு மட்டுமே`]
-        });
-      } else {
-        pool.push({
-          q:`What is correct about ${topic}?`,
-          correct:`${topic} is an important concept from the book`,
-          wrong:[`${topic} is not related to chapter`,`${topic} is wrong concept`,`${topic} is only a number`]
-        });
-      }
-    }
+  
+  // If no match, use default + computer bank
+  if(pool.length < count){
+    pool = pool.concat(QUESTION_BANK["computer"], QUESTION_BANK["default_tamil"]);
   }
-
-  // Shuffle and take unique, 4 options each
-  pool = pool.sort(()=>Math.random()-0.5);
-  let finalQuestions=[];
-  let usedSet=new Set();
-  for(let item of pool){
-    if(finalQuestions.length>=count) break;
-    if(usedSet.has(item.q)) continue;
-    usedSet.add(item.q);
-    let allOptions=[item.correct, ...item.wrong];
-    allOptions=[...new Set(allOptions)].sort(()=>Math.random()-0.5);
-    finalQuestions.push({q:item.q, options:allOptions, answer:item.correct});
+  
+  // Unique shuffle, no repeat question
+  pool = [...new Map(pool.map(item=>[item.q, item])).values()];
+  pool = pool.sort(()=>Math.random()-0.5).slice(0, count);
+  
+  let finalQuestions = pool.map(item=>{
+    let allOptions = [item.correct, ...item.wrong];
+    allOptions = [...new Set(allOptions)].sort(()=>Math.random()-0.5);
+    return {q:item.q, options:allOptions, answer:item.correct};
+  });
+  
+  // Ensure count
+  while(finalQuestions.length < count){
+    let extra = QUESTION_BANK["default_tamil"][finalQuestions.length % QUESTION_BANK["default_tamil"].length];
+    let allOptions = [extra.correct, ...extra.wrong].sort(()=>Math.random()-0.5);
+    finalQuestions.push({q:extra.q + ` (${topic})`, options:allOptions, answer:extra.correct});
   }
-  return finalQuestions;
+  
+  return finalQuestions.slice(0, count);
 }
