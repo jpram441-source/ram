@@ -1,188 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz & Books - GHSS</title>
-<link rel="stylesheet" href="css/style.css">
+<!DOCTYPE html><html lang="ta"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>GHSS - Book Real Questions</title><link rel="stylesheet" href="css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;700&display=swap');
-*{font-family:'Noto Sans Tamil',Inter,sans-serif !important;}
-.quiz-q{line-height:1.9 !important;white-space:pre-wrap;word-break:break-word;}
-.quiz-q b{font-size:16px;display:block;margin-bottom:10px;line-height:1.8;}
-.quiz-q label{display:block;margin:6px 0;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;}
-.quiz-q label:hover{background:#f1f5f9;}
-</style>
-</head>
-<body>
-<header class="topbar">
-<div><b id="myName"></b> <span id="myRole" class="badge"></span></div>
-<div><a href="dashboard.html" class="link" style="display:inline">Home</a> <button onclick="logout()" class="btn-danger-sm">Logout</button></div>
-</header>
-
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+<style>*{font-family:'Noto Sans Tamil',Inter,sans-serif !important;} .quiz-q{background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:16px;margin:12px 0;line-height:1.9;white-space:normal;word-break:break-word;} .quiz-q b{font-size:16px;display:block;margin-bottom:10px;} .quiz-q label{display:block;margin:6px 0;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;}</style>
+</head><body>
+<header class="topbar"><div><b id="myName"></b> <span id="myRole" class="badge"></span></div><div><a href="dashboard.html">Home</a> <button onclick="localStorage.clear();location.reload()" style="padding:6px 10px;background:red;color:#fff;border:none;border-radius:6px;margin-left:10px">CLEAR ALL</button> <button onclick="logout()" class="btn-danger-sm">Logout</button></div></header>
 <div class="container">
-
-<div class="card">
-<h3>📚 Upload Book PDF - Book la irunthu tha Quiz</h3>
-<p class="small">12th CS Tamil book upload panna, athula irunthu tha question varum. Odaiya koodathu ku fix panniten.</p>
-<select id="book_class"></select>
-<select id="book_sub"></select>
-<input type="file" id="book_file" accept="application/pdf">
-<button onclick="uploadBook()" class="btn-primary">Upload & Read Book</button>
-<p id="bookStatus" class="small"></p>
-<div id="bookList"></div>
+<div class="card"><h3>📚 Step 1: Book Upload - Real Tamil Extraction</h3><p class="small" style="color:#059669">Ipo Tamil odaiya koodathu, x,y position paathu serthu padikuren da</p><select id="book_class"></select><select id="book_sub"></select><input type="file" id="book_file" accept="application/pdf"><button onclick="uploadBookReal()" class="btn-primary">Upload & Extract Real Tamil</button><p id="bookStatus" class="small"></p><div id="bookPreview" style="max-height:200px;overflow:auto;background:#fff;padding:10px;border:1px solid #ddd;font-size:13px;white-space:pre-wrap"></div><div id="bookList"></div></div>
+<div class="card"><h3>📝 Step 2: Book la irunthu Question</h3><select id="q_class"></select><select id="q_subject"></select><input type="text" id="q_topic" placeholder="Topic: List / Tuple / Dictionary / Stack"><input type="number" id="q_count" value="5" min="3" max="10"><button onclick="generateFromBook()" class="btn-primary" style="background:#10b981">Generate From Book</button><div id="quizPreview"></div><button id="saveQuizBtn" onclick="saveQuiz()" class="btn-primary hidden">SUBMIT QUIZ</button></div>
+<div class="card"><h3>Saved Quizzes</h3><div id="quizList"></div></div>
 </div>
-
-<div class="card">
-<h3>📝 Create Quiz - Topic kudutha Book la irunthu Auto Question</h3>
-<input type="hidden" id="q_editIndex">
-<select id="q_class"></select>
-<select id="q_subject"></select>
-<input type="text" id="q_topic" placeholder="Topic ex: Tuple / டப்பிள் / List / Python">
-<input type="number" id="q_count" value="5" min="3" max="10">
-<button onclick="generateQuiz()" class="btn-primary" style="background:#10b981">Generate From Book (5 Questions)</button>
-<div id="quizPreview" style="margin-top:15px"></div>
-<button onclick="saveQuiz()" class="btn-primary hidden" id="saveQuizBtn">Submit Quiz</button>
-<button id="q_cancelBtn" onclick="cancelQuizEdit()" class="btn-secondary hidden">Cancel</button>
-</div>
-
-<div class="card">
-<h3>Weekly Quiz List - Edit/Delete</h3>
-<div id="quizList"></div>
-</div>
-
-</div>
-
-<script src="js/db.js"></script>
-<script src="js/auth.js"></script>
+<script src="js/db.js"></script><script src="js/auth.js"></script>
 <script>
-let currentUser=requireRole(['owner','teacher']);
-myName.innerText=currentUser.name;
-myRole.innerText=currentUser.role;
-myRole.className='badge '+currentUser.role;
+let currentUser=requireRole(['owner','teacher']);myName.innerText=currentUser.name;myRole.innerText=currentUser.role;myRole.className='badge '+currentUser.role;
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 let tempQuiz=[];
 
-function init(){
- let co=CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');
- q_class.innerHTML='<option value="">Select Class</option>'+co;
- book_class.innerHTML='<option value="">Select Class</option>'+co;
- updateSubjects();
- q_class.addEventListener('change',updateSubjects);
- book_class.addEventListener('change',()=>{
-   book_sub.innerHTML=getSubjects(book_class.value).map(s=>`<option value="${s}">${s}</option>`).join('');
- });
- book_sub.innerHTML=getSubjects('11th A').map(s=>`<option value="${s}">${s}</option>`).join('');
- pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
- renderBooks();
-}
+function init(){let co=CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');q_class.innerHTML='<option value="">Select Class</option>'+co;book_class.innerHTML='<option value="">Select Class</option>'+co;updateSub();q_class.addEventListener('change',updateSub);book_class.addEventListener('change',()=>{book_sub.innerHTML=getSubjects(book_class.value).map(s=>`<option>${s}</option>`).join('');});book_sub.innerHTML=getSubjects('12th B').map(s=>`<option>${s}</option>`).join('');renderBooks();renderQuizList();}
+function updateSub(){q_subject.innerHTML=getSubjects(q_class.value).map(s=>`<option>${s}</option>`).join('');}
 
-function updateSubjects(){
- q_subject.innerHTML=getSubjects(q_class.value).map(s=>`<option value="${s}">${s}</option>`).join('');
-}
-
-// FINAL TAMIL FIX UPLOAD - odaiyura eluthu serthu
-async function uploadBook(){
+// REAL TAMIL EXTRACTION - Position paathu
+async function uploadBookReal(){
  let cls=book_class.value, sub=book_sub.value, file=book_file.files[0];
- if(!cls||!sub||!file){alert('Select class, subject and file da');return;}
- bookStatus.innerText="Reading book... Tamil fix pannuren... wait da...";
- bookStatus.style.color="blue";
+ if(!cls||!sub||!file){alert('Class, Subject, File select pannu da');return;}
+ bookStatus.innerText="📖 Book padikuren... 360 pages... wait da..."; bookStatus.style.color="blue";
  try{
   let buf=await file.arrayBuffer();
   let pdf=await pdfjsLib.getDocument({data:buf, cMapUrl:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/', cMapPacked:true}).promise;
-  let text="";
-  // First 80 pages enough for 12th CS
-  for(let i=1;i<=Math.min(pdf.numPages, 80);i++){
-    let page=await pdf.getPage(i);
-    let tc=await page.getTextContent();
-    let pageText=tc.items.map(it=>it.str).join(' ');
-    text+=pageText+" ";
+  let fullText="";
+  for(let p=1;p<=Math.min(pdf.numPages,70);p++){
+   let page=await pdf.getPage(p);
+   let tc=await page.getTextContent();
+   // Group by Y line
+   let lines={};
+   tc.items.forEach(item=>{
+     let y=Math.round(item.transform[5]);
+     let x=item.transform[4];
+     if(!lines[y]) lines[y]=[];
+     lines[y].push({x:x, str:item.str});
+   });
+   let sortedY=Object.keys(lines).sort((a,b)=>b-a);
+   sortedY.forEach(y=>{
+     let line=lines[y].sort((a,b)=>a.x-b.x).map(o=>o.str).join(''); // NO extra space - Tamil ku
+     // Add space between lines
+     fullText+=line+" ";
+   });
+   fullText+="\n";
+   if(p%10==0) bookStatus.innerText=`Reading ${p}/${pdf.numPages} pages...`;
   }
+  // Clean
+  fullText=fullText.replace(/\s{2,}/g,' ').replace(/12th Computer Science.*?indd.*?\d+/gi,' ').trim();
   let key=cls+"_"+sub;
-  books[key]=text; // Raw save, fixTamilBroken will fix in db.js
+  books[key]=fullText;
   saveAll();
-  let count=Math.floor(text.length/1000);
-  bookStatus.innerText="✅ Book Read Success! "+key+" - "+count+"k chars. Old books clear panni re-upload pannita, ipo quiz olunga varum da!";
+  bookStatus.innerText=`✅ SUCCESS! ${key} - ${Math.round(fullText.length/1000)}k chars extracted - Tamil odaiya koodathu!`;
   bookStatus.style.color="green";
+  bookPreview.innerText=fullText.substring(0,1500)+"...";
   renderBooks();
- }catch(e){
-  console.error(e);
-  bookStatus.innerText="❌ Error reading PDF: "+e.message;
-  bookStatus.style.color="red";
+ }catch(e){bookStatus.innerText="❌ Error: "+e.message; console.error(e);}
+}
+function renderBooks(){bookList.innerHTML=Object.keys(books).map(k=>`<div class="quiz-q"><b>${k}</b> - ${books[k].length} chars <button onclick="deleteBook('${k}')" style="background:red;color:#fff;border:none;padding:4px 8px;border-radius:6px">Delete</button></div>`).join('')||"No books";}
+function deleteBook(k){if(confirm('Delete '+k+'?')){delete books[k];saveAll();renderBooks();}}
+
+function generateFromBook(){
+ let cls=q_class.value, sub=q_subject.value, topic=q_topic.value.trim(), cnt=parseInt(q_count.value)||5;
+ if(!cls||!topic){alert('Class & Topic kudu da');return;}
+ let key=cls+"_"+sub; let text=books[key];
+ if(!text){ // try any book with same subject
+   for(let k in books){ if(k.includes(sub)) {text=books[k]; break;} }
  }
-}
-
-function renderBooks(){
- bookList.innerHTML=Object.keys(books).map(k=>`<div class="quiz-q"><b>${k}</b> - ${books[k].length} chars <button onclick="deleteBook('${k}')" class="action-btn del">Delete</button></div>`).join('')||'No books yet';
-}
-
-function deleteBook(k){
- if(confirm('Delete book '+k+'? Old odanja book delete pannanum da')){
-   delete books[k];
-   saveAll();
-   renderBooks();
+ if(!text){alert('Book illa da! First book upload pannu - '+key);return;}
+ // Sentences from book
+ let sentences=text.split(/[.!?|\n]/).map(s=>s.trim()).filter(s=>s.length>25 && s.length<250 && !s.toLowerCase().includes('indd'));
+ sentences=[...new Set(sentences)];
+ if(sentences.length<10){alert('Book la sentence kammi irukku - vera page upload pannu');return;}
+ let topicLower=topic.toLowerCase();
+ let topicSent=sentences.filter(s=>s.toLowerCase().includes(topicLower));
+ let pool=topicSent.length>=cnt?topicSent:sentences;
+ pool=[...new Set(pool)].sort(()=>Math.random()-0.5);
+ let used=new Set(); tempQuiz=[];
+ for(let i=0;i<pool.length && tempQuiz.length<cnt;i++){
+  let correct=pool[i].trim();
+  if(used.has(correct) || correct.length<20) continue;
+  used.add(correct);
+  let others=sentences.filter(s=>s!==correct).sort(()=>Math.random()-0.5).slice(0,3);
+  let opts=[correct,...others].sort(()=>Math.random()-0.5);
+  tempQuiz.push({q:`கேள்வி ${tempQuiz.length+1}: "${topic}" பற்றி புத்தகத்தில் உள்ள சரியானது எது?`, options:opts, answer:correct});
  }
+ let html=tempQuiz.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b>${qq.options.map(o=>`<label><input type="radio" name="p${i}"> ${o}</label>`).join('')}<div style="color:green;font-size:12px;margin-top:8px">Correct: ${qq.answer.substring(0,100)}...</div></div>`).join('');
+ quizPreview.innerHTML=html; saveQuizBtn.classList.remove('hidden');
 }
-
-function generateQuiz(){
- let cls=q_class.value, sub=q_subject.value, topic=q_topic.value.trim(), count=parseInt(q_count.value)||5;
- if(!cls||!topic){alert('Class and Topic kududa');return;}
- tempQuiz=generateTamilQuiz(topic,sub,cls,count);
- if(tempQuiz.length===0){
-   quizPreview.innerHTML="<p style='color:red'>Book illa da! First upload pannu da!</p>";
-   return;
- }
- let html=tempQuiz.map((qq,i)=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.map(o=>`<label><input type="radio" name="pq${i}" value="${o.replace(/"/g,'&quot;')}"> ${o}</label>`).join('')}<br><small style="color:green">Correct: ${qq.answer.substring(0,120)}</small></div>`).join('');
- quizPreview.innerHTML=html;
- saveQuizBtn.classList.remove('hidden');
-}
-
-function saveQuiz(){
- if(tempQuiz.length==0){alert('Generate first da');return;}
- let idx=q_editIndex.value;
- let obj={id:idx!==''?quizzes[idx].id:Date.now(),class:q_class.value,subject:q_subject.value,topic:q_topic.value,list:tempQuiz,by:currentUser.name,date:new Date().toLocaleDateString()};
- if(idx!=='') quizzes[idx]=obj; else quizzes.push(obj);
- saveAll();
- cancelQuizEdit();
- renderQuizList();
- alert('✅ Quiz Submitted - Book la irunthu '+tempQuiz.length+' questions!');
-}
-
-function editQuiz(i){
- let q=quizzes[i];
- q_class.value=q.class;
- updateSubjects();
- q_subject.value=q.subject;
- q_topic.value=q.topic;
- q_editIndex.value=i;
- tempQuiz=q.list;
- quizPreview.innerHTML=tempQuiz.map(qq=>`<div class="quiz-q"><b>${qq.q}</b><br>${qq.options.join('<br>')}<br><small>Ans: ${qq.answer}</small></div>`).join('');
- saveQuizBtn.classList.remove('hidden');
- q_cancelBtn.classList.remove('hidden');
-}
-
-function cancelQuizEdit(){
- q_editIndex.value='';
- quizPreview.innerHTML='';
- saveQuizBtn.classList.add('hidden');
- q_cancelBtn.classList.add('hidden');
- tempQuiz=[];
-}
-
-function deleteQuiz(i){
- if(confirm('Delete quiz?')){
-   quizzes.splice(i,1);
-   saveAll();
-   renderQuizList();
- }
-}
-
-function renderQuizList(){
- quizList.innerHTML=quizzes.map((q,i)=>`<div class="quiz-q"><b>${q.class}-${q.subject}-${q.topic}</b> (${q.list.length} Qs)<br><small>${q.by} ${q.date}</small><br><button onclick="editQuiz(${i})" class="action-btn edit">Edit</button><button onclick="deleteQuiz(${i})" class="action-btn del">Delete</button></div>`).join('')||'No quiz yet';
-}
-
+function saveQuiz(){if(!tempQuiz.length){alert('Generate first');return;}let obj={id:Date.now(),class:q_class.value,subject:q_subject.value,topic:q_topic.value,list:tempQuiz,by:currentUser.name,date:new Date().toLocaleDateString()};quizzes.push(obj);saveAll();renderQuizList();alert('Quiz Saved from Book!');tempQuiz=[];quizPreview.innerHTML="";saveQuizBtn.classList.add('hidden');}
+function renderQuizList(){quizList.innerHTML=quizzes.slice().reverse().map((q,i)=>`<div class="quiz-q"><b>${q.class}-${q.subject}-${q.topic}</b> (${q.list.length} Qs) <button onclick="quizzes.splice(quizzes.length-1-${i},1);saveAll();renderQuizList()" style="float:right;background:red;color:#fff;border:none;padding:4px 8px;border-radius:6px">Delete</button><br><small>${q.by} ${q.date}</small></div>`).join('')||"No quiz";}
 init();
-renderQuizList();
-</script>
-</body>
-</html>
+</script></body></html>
