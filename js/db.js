@@ -9,95 +9,62 @@ let attempts=JSON.parse(localStorage.getItem('ghss_attempts')||'[]');
 let books=JSON.parse(localStorage.getItem('ghss_books')||'{}');
 function saveAll(){localStorage.setItem('ghss_users',JSON.stringify(users));localStorage.setItem('ghss_assign',JSON.stringify(assignments));localStorage.setItem('ghss_quiz',JSON.stringify(quizzes));localStorage.setItem('ghss_attempts',JSON.stringify(attempts));localStorage.setItem('ghss_books',JSON.stringify(books));}
 
-// CLEAN Tamil text - remove junk like "12th Computer Science_TM Chapter 5.indd"
+// --- TAMIL FIX - odanja eluthu serthu ---
+function fixTamilText(text){
+  if(!text) return "";
+  // Remove English book junk
+  let t = text.replace(/12th Computer Science.*?indd.*?\d+/gi,' ')
+              .replace(/12 - ஆம் வகுப்பு கணினி அறிவியல்.*?\d+/g,' ')
+              .replace(/\d+\s*-\s*ஆம் வகுப்பு.*?\n/g,' ');
+  // Tamil letter ku naduvula space vantha remove pannu - பு த் -> புத்
+  t = t.replace(/([\u0B80-\u0BFF])\s+([\u0B80-\u0BFF])/g,'$1$2');
+  t = t.replace(/([\u0B80-\u0BFF])\s+([\u0B80-\u0BFF])/g,'$1$2'); // 2 times for double split
+  // Multiple spaces -> single
+  t = t.replace(/\s{2,}/g,' ').trim();
+  return t;
+}
+
 function cleanBookSentences(text){
   if(!text) return [];
-  let t = text.replace(/12th Computer Science.*?\d+/g,' ')
-              .replace(/\d+\s*-\s*ஆம் வகுப்பு கணினி அறிவியல்.*?\d+/g,' ')
-              .replace(/\s+/g,' ');
-  // Split by Tamil and English sentence endings
-  let sentences = t.split(/[.?!।\n]/).map(s=>s.trim()).filter(s=>{
-    return s.length>20 && s.length<250 && !s.includes('>>') && !s.includes('indd') && !s.match(/^\d+$/);
+  let fixed = fixTamilText(text);
+  let sentences = fixed.split(/[.!?\n]/).map(s=>s.trim()).filter(s=>{
+    return s.length>15 && s.length<200 && !s.includes('>>>') && !s.toLowerCase().includes('indd');
   });
-  // Unique
   return [...new Set(sentences)];
 }
 
 function generateTamilQuiz(topic, subject, cls, count){
   let key = cls+"_"+subject;
   let bookText = books[key] || "";
-  
-  // If no book for this exact class, search any book with same subject
   if(!bookText){
-    for(let k in books){
-      if(k.includes(subject) || subject.includes(k.split('_')[1]||'')){
-        bookText += " " + books[k];
-      }
-    }
+    for(let k in books){ if(k.includes(subject)) bookText += " " + books[k]; }
   }
-
   if(!bookText || bookText.startsWith("BOOK_UPLOADED")){
-    alert("Book upload pannala da! "+key+" ku book upload pannu, aprom tha book la irunthu question varum");
-    return [];
+    return [{q:`Book upload pannala da! ${key} ku book upload pannu`, options:["Book illa","Book illa","Book illa","Book illa"], answer:"Book illa"}];
   }
 
   let allSentences = cleanBookSentences(bookText);
-  if(allSentences.length < 5){
-    alert("Book la text romba kammi da, vera PDF upload pannu");
-    return [];
-  }
+  if(allSentences.length<4) allSentences = bookText.split(/[.!?]/).map(s=>fixTamilText(s.trim())).filter(s=>s.length>15);
 
   let topicLower = topic.toLowerCase();
-  // Topic containing sentences - book la irunthu
-  let topicSentences = allSentences.filter(s=>s.toLowerCase().includes(topicLower));
-  if(topicSentences.length===0){
-    // If topic not found, search partial word - e.g., tuple ku "டப்பிள்" or "வரிசை"
-    topicSentences = allSentences.filter(s=> s.includes("டப்பிள்") || s.includes("வரிசை") || s.toLowerCase().includes("tuple") );
-  }
-  // If still none, use all
-  let pool = topicSentences.length>=count ? topicSentences : allSentences;
-  
-  // Shuffle and unique
+  let topicSentences = allSentences.filter(s=>s.toLowerCase().includes(topicLower) || s.includes("டப்பிள்") || s.includes("வரிசை") || s.includes("பட்டியல்"));
+  let pool = topicSentences.length>=2 ? topicSentences : allSentences;
   pool = [...new Set(pool)].sort(()=>Math.random()-0.5);
-  
-  let finalQuestions = [];
-  let usedSentences = new Set();
-  
-  for(let i=0; i<pool.length && finalQuestions.length < count; i++){
-    let correctSentence = pool[i].trim();
-    if(usedSentences.has(correctSentence) || correctSentence.length<15) continue;
-    usedSentences.add(correctSentence);
-    
-    // Generate 3 distractors from OTHER sentences in SAME BOOK - vera vera option
-    let otherSentences = allSentences.filter(s=>s!==correctSentence).sort(()=>Math.random()-0.5).slice(0,3);
-    // Ensure all options different
-    let options = [correctSentence, ...otherSentences];
-    options = [...new Set(options)];
-    while(options.length<4){
-      options.push(allSentences[Math.floor(Math.random()*allSentences.length)]);
-      options=[...new Set(options)];
-    }
-    options = options.sort(()=>Math.random()-0.5).slice(0,4);
-    
-    // If correct not in options due to slice, add it
-    if(!options.includes(correctSentence)){
-      options[3]=correctSentence;
-      options=options.sort(()=>Math.random()-0.5);
-    }
-    
-    let qText = "";
-    if(/[\u0B80-\u0BFF]/.test(topic) || /[\u0B80-\u0BFF]/.test(correctSentence)){
-      qText = `கேள்வி ${finalQuestions.length+1}: "${topic}" பற்றி புத்தகத்தில் உள்ள சரியான கூற்று எது?`;
-    } else {
-      qText = `Q${finalQuestions.length+1}: From book, what is correct about "${topic}"?`;
-    }
-    
-    finalQuestions.push({
-      q: qText + `\n(${correctSentence.substring(0,60)}...)`,
-      options: options,
-      answer: correctSentence
-    });
+
+  let finalQuestions=[];
+  let used=new Set();
+  for(let i=0;i<pool.length && finalQuestions.length<count;i++){
+    let correct = fixTamilText(pool[i].trim());
+    if(used.has(correct) || correct.length<10) continue;
+    used.add(correct);
+    let others = allSentences.filter(s=>s!==pool[i]).sort(()=>Math.random()-0.5).slice(0,3).map(s=>fixTamilText(s));
+    let options=[correct, ...others];
+    options=[...new Set(options)];
+    while(options.length<4) options.push(allSentences[Math.floor(Math.random()*allSentences.length)]);
+    options=options.map(o=>fixTamilText(o)).slice(0,4).sort(()=>Math.random()-0.5);
+    if(!options.includes(correct)){ options[3]=correct; options=options.sort(()=>Math.random()-0.5); }
+    let qTitle = /[\u0B80-\u0BFF]/.test(topic) || /[\u0B80-\u0BFF]/.test(correct) ? `கேள்வி ${finalQuestions.length+1}: "${topic}" பற்றி புத்தகத்தில் உள்ளது எது?` : `Q${finalQuestions.length+1}: What is correct about "${topic}" from book?`;
+    finalQuestions.push({q:qTitle, options:options, answer:correct});
   }
-  
   return finalQuestions;
-}
+      }
